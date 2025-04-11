@@ -11,6 +11,7 @@ from dragger import Dragger
 class Main:
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption('Chess_AI')
         self.game = Game()
@@ -31,14 +32,12 @@ class Main:
 
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    print(event.pos)
                     dragger.update_mouse(event.pos)
 
                     row = dragger.mouseY // SQSIZE
                     col = dragger.mouseX // SQSIZE
                     square = chess.square(col, 7 - row)
                     piece = board.piece_at(square)
-                    print(piece)
                     dragger.save_initial(event.pos)
                     if piece is not None:
                         # Wrap the piece for rendering
@@ -56,13 +55,36 @@ class Main:
                     # 7- tai vi python-chess row bi nguoc voi ca row minh dung o dragger.mouseY
                     from_square = chess.square(dragger.initial_col, 7 - dragger.initial_row)
                     to_square = chess.square(released_col, 7 - released_row)
-                    move = chess.Move(from_square, to_square)
-                    print(str(dragger.initial_row) + " " + str(dragger.initial_col))
-                    print(str(released_row) + " " + str(released_col))
-                    print(move)
+                    piece = board.piece_at(from_square)
+                    #Phong hau, can mot cai GUI de phong cac con khac
+                    is_promotion = (
+                            piece.piece_type == chess.PAWN and
+                            (released_row == 0 or released_row == 7)
+                    )
+                    if is_promotion:
+                        move = chess.Move(from_square, to_square,
+                                          promotion=chess.QUEEN)
+                    else:
+                        move = chess.Move(from_square, to_square)
                     if move in board.legal_moves:
-                        game.show_move()
+                        game.last_move = [[dragger.initial_row, dragger.initial_col], [released_row, released_col]]
+                        pygame.mixer.Sound('../assets/sounds/move.wav').play()
+
                         board.push(move)
+
+                    # Kiem tra co dang bi chieu tuong hay khong
+                    if board.is_check():
+                        print("Check mate!")
+                        if board.turn:
+                            game.is_check = True
+                            game.white_check = True
+                        else:
+                            game.is_check = True
+                            game.black_check = True
+                    else:
+                        game.is_check = False
+                        game.white_check = False
+                        game.black_check = False
                     dragger.undrag_piece()
 
                 elif event.type == pygame.QUIT:
