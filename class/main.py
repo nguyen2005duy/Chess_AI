@@ -52,7 +52,6 @@ class Main:
                         dragger.update_blit(screen)
 
                 elif event.type == pygame.MOUSEBUTTONUP:
-                    print("Mouse_up")
                     released_row = dragger.mouseY // SQSIZE
                     released_col = dragger.mouseX // SQSIZE
                     # 7- tai vi python-chess row bi nguoc voi ca row minh dung o dragger.mouseY
@@ -76,7 +75,7 @@ class Main:
                         board.push(move)
                     # Ai_move
                     if not board.turn:
-                        ai_move: chess.Move = minmaxAI.ai_move(board)
+                        ai_move: chess.Move = minmaxAI.calculate_move(board)
                         from_square: chess.Move.from_square = ai_move.from_square
                         to_square: chess.Move.to_square = ai_move.to_square
                         from_row = 7 - from_square // 8
@@ -99,8 +98,6 @@ class Main:
                         game.white_check = False
                         game.black_check = False
                     dragger.undrag_piece()
-
-
                 elif event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()

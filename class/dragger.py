@@ -34,7 +34,6 @@ class Dragger:
         self.initial_row = pos[1] // SQSIZE
 
     def drag_piece(self, piece):
-        print("drag piece ran")
         self.piece = piece
         self.dragging = True
 
