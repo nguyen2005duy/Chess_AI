@@ -1,48 +1,46 @@
 import os
-class Piece:
-    def __init__(self, name, color, value, texture=None, texture_rect=None):
-        self.name = name
-        self.color = color
+import chess
 
-        value_sign = 1 if color == 'white' else -1
-        self.value = value*value_sign
-        self.moves =[]
+
+class WrappedPiece:
+    def __init__(self, chess_piece, row, col):
+        self.chess_piece = chess_piece  # python-chess piece
+        self.row = row
+        self.col = col
+        self.color = 'white' if chess_piece.color else 'black'
+        self.name = self.get_piece_name(chess_piece)
+        self.value = self.get_piece_value()
         self.moved = False
         self.set_texture()
-        self.texture_rect = texture_rect
-    def set_texture(self, size =80):
+        self.texture_rect = None
+
+    def get_piece_name(self, piece):
+        piece_map = {
+            chess.PAWN: 'pawn',
+            chess.KNIGHT: 'knight',
+            chess.BISHOP: 'bishop',
+            chess.ROOK: 'rook',
+            chess.QUEEN: 'queen',
+            chess.KING: 'king'
+        }
+        return piece_map[piece.piece_type]
+
+    def get_piece_value(self):
+        value_map = {
+            'pawn': 1.0,
+            'knight': 3.0,
+            'bishop': 3.001,
+            'rook': 5.0,
+            'queen': 9.0,
+            'king': 100000
+        }
+        sign = 1 if self.color == 'white' else -1
+        return sign * value_map[self.name]
+
+    def set_texture(self, size=80):
         self.texture = os.path.join(
             f'../assets/images/imgs-{size}px/{self.color}_{self.name}.png'
         )
-    def add_moves(self,move):
+
+    def add_moves(self, move):
         self.moves.append(move)
-
-class Pawn(Piece):
-    def __init__(self, color):
-        self.dir = -1 if color == 'white' else 1
-        super().__init__('pawn', color, 1.0)
-
-
-class Knight(Piece):
-    def __init__(self, color):
-        super().__init__('knight', color, 3.0)
-
-
-class Bishop(Piece):
-    def __init__(self, color):
-        super().__init__('bishop', color, 3.001)
-
-
-class Rook(Piece):
-    def __init__(self, color):
-        super().__init__('rook', color, 5.0)
-
-
-class Queen(Piece):
-    def __init__(self, color):
-        super().__init__('queen', color, 9.0)
-
-
-class King(Piece):
-    def __init__(self, color):
-        super().__init__('king', color, 100000)
