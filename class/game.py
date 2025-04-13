@@ -66,3 +66,33 @@ class Game:
                 img_center = col * SQSIZE + SQSIZE // 2, row * SQSIZE + SQSIZE // 2
                 wrapper_piece.texture_rect = img.get_rect(center=img_center)
                 screen.blit(img, wrapper_piece.texture_rect)
+
+    def show_moves(self, screen):
+        if self.dragger.dragging and self.dragger.piece:
+            move_color = (0, 0, 0, 100) 
+            capture_color = (200, 0, 0, 150) 
+      
+            move_surface = pygame.Surface((SQSIZE, SQSIZE), pygame.SRCALPHA)
+            pygame.draw.circle(move_surface, move_color, (SQSIZE // 2, SQSIZE // 2), SQSIZE // 6)
+
+            capture_surface = pygame.Surface((SQSIZE, SQSIZE), pygame.SRCALPHA)
+            pygame.draw.circle(capture_surface, capture_color, (SQSIZE // 2, SQSIZE // 2), SQSIZE // 2, width=5) # Draw a ring for captures
+
+
+            initial_row, initial_col = self.dragger.initial_row, self.dragger.initial_col
+            from_square = chess.square(initial_col, 7 - initial_row)
+
+            for move in self.board.legal_moves:
+                if move.from_square == from_square:
+                    to_square = move.to_square
+                    to_row = 7 - chess.square_rank(to_square)
+                    to_col = chess.square_file(to_square)
+
+                    is_capture = self.board.is_capture(move)
+
+                    blit_pos = (to_col * SQSIZE, to_row * SQSIZE)
+
+                    if is_capture:
+                        screen.blit(capture_surface, blit_pos)
+                    else:
+                        screen.blit(move_surface, blit_pos)

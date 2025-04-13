@@ -38,9 +38,9 @@ class WrappedPiece:
         return sign * value_map[self.name]
 
     def set_texture(self, size=80):
-        self.texture = os.path.join(
-            f'../assets/images/imgs-{size}px/{self.color}_{self.name}.png'
-        )
-
+        script_dir = os.path.dirname(__file__)
+        img_path = os.path.join(script_dir, '..', 'assets', 'images', f'imgs-{size}px', f'{self.color}_{self.name}.png')
+        self.texture = os.path.abspath(img_path)
+        
     def add_moves(self, move):
         self.moves.append(move)
