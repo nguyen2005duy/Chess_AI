@@ -7,7 +7,7 @@ from game import Game
 from piece import WrappedPiece
 from minmaxAI import minmaxAI
 from dragger import Dragger
-
+from ChessAI import *
 
 MENU = 0
 PLAYING = 1
@@ -23,6 +23,7 @@ class Main:
         self.game = Game()
         self.dragger = self.game.dragger  # use dragger from Game class
         self.minmaxAI = minmaxAI()
+        self.chess_ai = ChessAI()
         self.font = pygame.font.SysFont("Arial", 40)
         self.small_font = pygame.font.SysFont("Arial", 30)
         self.state = MENU
@@ -154,7 +155,7 @@ class Main:
                                 # AI move
                                 if not board.turn:
                                     pygame.display.update()
-                                    ai_move: chess.Move = minmaxAI.calculate_move(board)
+                                    ai_move: chess.Move = self.chess_ai.calculate_move(board)
                                     from_square: chess.Move.from_square = (
                                         ai_move.from_square
                                     )
