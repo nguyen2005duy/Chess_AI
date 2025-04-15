@@ -25,7 +25,7 @@ def load_games(data_dir="lichess"):
                     game = chess.pgn.read_game(f)
                     if game is None:  # End of file
                         break
-                    if (len(games) < 100):
+                    if (len(games) < 500):
                         games.append(game)
                     else :
                         print(f"Total games loaded: {len(games)}")
