@@ -7,7 +7,9 @@ from game import Game
 from piece import WrappedPiece
 from minmaxAI import minmaxAI
 from dragger import Dragger
+
 from ChessAI import *
+
 
 MENU = 0
 PLAYING = 1
@@ -29,6 +31,7 @@ class Main:
         self.state = MENU
         self.play_button_rect = None
         self.quit_button_rect = None
+        self.player_color = None
 
     def draw_menu(self, screen):
         screen.fill((20, 20, 20))
@@ -72,6 +75,7 @@ class Main:
                             self.play_button_rect
                             and self.play_button_rect.collidepoint(pos)
                         ):
+                            self.player_color = game.show_color_selection_menu(screen)
                             self.state = PLAYING 
                         elif (
                             self.quit_button_rect
@@ -133,9 +137,21 @@ class Main:
                                 )
                             )
 
+                            #promotion GUI - done
                             if is_promotion:
+                                promotion_menu = game.show_promotion_menu(screen)
+                                chosen_piece = None
+                                if promotion_menu == 'q':
+                                    chosen_piece = chess.QUEEN
+                                elif promotion_menu == 'r':
+                                    chosen_piece = chess.ROOK
+                                elif promotion_menu == 'b':
+                                    chosen_piece = chess.BISHOP
+                                elif promotion_menu == 'n':
+                                    chosen_piece = chess.KNIGHT
+
                                 move = chess.Move(
-                                    from_square, to_square, promotion=chess.QUEEN
+                                    from_square, to_square, promotion=chosen_piece
                                 )
                             else:
                                 move = chess.Move(from_square, to_square)
@@ -152,9 +168,13 @@ class Main:
                                 pygame.mixer.Sound(os.path.abspath(sound_path)).play()
                                 board.push(move)
 
-                                # AI move
-                                if not board.turn:
+                                #AI move
+                                #bug: nếu chọn quân đen --> AI đi quân trắng nhưng lượt đi đầu
+                                #tiên của quân trắng lại là mình chơi
+                                if ((board.turn and self.player_color == 'black') or 
+                                    (not board.turn and self.player_color == 'white')):
                                     pygame.display.update()
+                                    #ai_move: chess.Move = minmaxAI.calculate_move(board)
                                     ai_move: chess.Move = self.chess_ai.calculate_move(board)
                                     from_square: chess.Move.from_square = (
                                         ai_move.from_square
@@ -169,13 +189,15 @@ class Main:
                                         [to_row, to_col],
                                     ]
                                     board.push(ai_move)
+                                
 
                                  # Kiem tra co dang bi chieu tuong hay khong
                                 if board.is_check():
                                     print(
                                         "Checkmate!"
                                     ) 
-                                    if board.turn: 
+                                    if ((board.turn and self.player_color == 'black') or 
+                                        (not board.turn and self.player_color == 'white')): 
                                         game.is_check = True
                                         game.white_check = True
                                     else:

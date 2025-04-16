@@ -1,5 +1,6 @@
 import pygame
 import chess
+import sys
 from const import *
 from dragger import Dragger
 from piece import WrappedPiece  # your wrapper class
@@ -96,3 +97,84 @@ class Game:
                         screen.blit(capture_surface, blit_pos)
                     else:
                         screen.blit(move_surface, blit_pos)
+    
+    def show_promotion_menu(self, surface):
+        white_piece = self.board.turn
+        screen = surface
+        color = (234, 235, 200) if not white_piece else (119, 154, 88) #light green - black piece
+        screen.fill(color)
+
+        str = 'white' if white_piece else 'black'
+
+        promotion_pieces = ['queen', 'rook', 'bishop', 'knight']
+        piece_keys = ['q', 'r', 'b', 'n']
+        piece_images = []
+
+        for name in promotion_pieces:
+            path = f'assets/images/imgs-128px/{str}_{name}.png'
+            image = pygame.image.load(path)
+            image = pygame.transform.scale(image, (SQSIZE, SQSIZE))
+            piece_images.append(image)
+
+        section_height = HEIGHT//4
+        rects = []
+
+
+        color1 = (119, 154, 88) if not white_piece else (234, 235, 200)
+        for i in range(4):
+            y = i * section_height
+            rect = pygame.Rect(0, y, WIDTH, section_height)
+            rects.append(rect)
+
+            pygame.draw.rect(screen, color1, rect, 3)
+
+            img_x = (WIDTH - SQSIZE) // 2
+            img_y = y + (section_height - SQSIZE) // 2
+            
+            screen.blit(piece_images[i], (img_x, img_y))
+        
+        pygame.display.update()
+
+        while True: 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = event.pos
+                    for i, rect in enumerate(rects):
+                        if rect.collidepoint(mouse_x, mouse_y):
+                            return piece_keys[i]
+                        
+    def show_color_selection_menu(self, surface):
+        screen = surface
+        font = pygame.font.SysFont("Arial", 30)
+        screen.fill((30, 30, 30))
+
+        white_rect = pygame.Rect(WIDTH // 4, HEIGHT // 2 - 60, WIDTH // 2, 50)
+        black_rect = pygame.Rect(WIDTH // 4, HEIGHT // 2 + 20, WIDTH // 2, 50)
+
+        while True:
+            pygame.draw.rect(screen, (240, 240, 240), white_rect)
+            pygame.draw.rect(screen, (50, 50, 50), black_rect)
+
+            white_text = font.render("White", True, (0, 0, 0))
+            black_text = font.render("Black", True, (255, 255, 255))
+
+            screen.blit(white_text, white_text.get_rect(center=white_rect.center))
+            screen.blit(black_text, black_text.get_rect(center=black_rect.center))
+
+            pygame.display.update()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if white_rect.collidepoint(event.pos):
+                        return 'white'
+                    elif black_rect.collidepoint(event.pos):
+                        return 'black'
+
+
