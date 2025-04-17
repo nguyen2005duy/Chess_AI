@@ -111,7 +111,7 @@ class Game:
         piece_images = []
 
         for name in promotion_pieces:
-            path = f'assets/images/imgs-128px/{str}_{name}.png'
+            path = f'../assets/images/imgs-128px/{str}_{name}.png'
             image = pygame.image.load(path)
             image = pygame.transform.scale(image, (SQSIZE, SQSIZE))
             piece_images.append(image)

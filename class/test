@@ -1,0 +1,48 @@
+ def __init__(self):
+        self.piece_values = {
+            chess.PAWN: 1,
+            chess.KNIGHT: 3.2,
+            chess.BISHOP: 3.3,
+            chess.ROOK: 5,
+            chess.QUEEN: 9,
+            chess.KING: 0  # Do not use king value directly
+        }
+        self.max_depth  = 3
+
+        # Bonus positional piece-square tables (simplified for white, mirrored for black)
+        self.pawn_table = [
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0.5, 1, 1, -2, -2, 1, 1, 0.5,
+            0.5, -0.5, -1, 0, 0, -1, -0.5, 0.5,
+            0, 0, 0, 2, 2, 0, 0, 0,
+            0.5, 0.5, 1, 2.5, 2.5, 1, 0.5, 0.5,
+            1, 1, 2, 3, 3, 2, 1, 1,
+            5, 5, 5, 5, 5, 5, 5, 5,
+            0, 0, 0, 0, 0, 0, 0, 0
+        ]
+
+    def evaluate_board(self, board):
+        value = 0
+
+        for square in chess.SQUARES:
+            piece = board.piece_at(square)
+            if piece:
+                sign = 1 if piece.color == chess.WHITE else -1
+                piece_type = piece.piece_type
+                value += sign * self.piece_values.get(piece_type, 0)
+
+                # Positional bonus: example for pawns
+                if piece_type == chess.PAWN:
+                    table = self.pawn_table
+                    index = square if piece.color == chess.WHITE else chess.square_mirror(square)
+                    value += sign * table[index] * 0.1  # scale it down
+
+        # Bonus: mobility
+        white_moves = len(list(board.legal_moves)) if board.turn == chess.WHITE else 0
+        board.push(chess.Move.null())
+        black_moves = len(list(board.legal_moves)) if board.turn == chess.BLACK else 0
+        board.pop()
+
+        value += 0.01 * (white_moves - black_moves)
+
+        return value

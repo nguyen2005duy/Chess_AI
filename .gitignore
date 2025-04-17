@@ -95,3 +95,7 @@ settings/local.py
 config.local.py
 
 _build/
+class/__pycache__/game.cpython-312.pyc
+class/__pycache__/game.cpython-312.pyc
+class/__pycache__/minmaxAI.cpython-312.pyc
+/class/__pycache__
