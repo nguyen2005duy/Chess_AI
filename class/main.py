@@ -176,7 +176,7 @@ class Main:
                                     pygame.display.update()
 
                                     #ai_move: chess.Move = minmaxAI.calculate_move(board)
-                                    ai_move: chess.Move = self.chess_ai.calculate_move(board)
+                                    ai_move: chess.Move = self.minmaxAI.calculate_move(board)
                                     from_square: chess.Move.from_square = (
                                         ai_move.from_square
                                     )
