@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sys
 import chess
 import time
@@ -11,11 +10,10 @@ from .transposition_table import clear_tt
 from .move_ordering import KILLER_MOVES, HISTORY_HEURISTIC # For clearing on new game
 
 # --- UCI Engine State ---
-# We use a python-chess board internally in main to easily handle UCI position commands
 current_board = chess.Board()
 engine_options = {
-    "Threads": 1, # Not used yet, but standard option
-    "Hash": 16    # Not used yet, but standard option
+    "Threads": 1,
+    "Hash": 16
 }
 is_searching = False
 search_thread = None
@@ -24,9 +22,9 @@ search_thread = None
 
 def handle_uci():
     """ Responds to the 'uci' command. """
-    print("id name MyBitboardEngine") # Replace with your engine name
-    print("id author Roo") # Replace with your name/handle
-    # TODO: Add options (like Hash, Threads) if they are actually implemented
+    print("id name Chess")
+    print("id author Chess")
+    # TODO: Add options (like Hash, Threads)
     # print(f"option name Hash type spin default 16 min 1 max 1024")
     # print(f"option name Threads type spin default 1 min 1 max 1")
     print("uciok")
@@ -97,7 +95,7 @@ def handle_position(parts):
 
     # Initialize the internal bitboard state AFTER setting up the python-chess board
     initialize_board_state(current_board)
-    # print(f"info string Board state initialized for FEN: {current_board.fen()}") # Optional debug
+    # print(f"info string Board state initialized for FEN: {current_board.fen()}")
 
 def run_search(board_to_search, depth_limit, time_limit_ms):
     """ Function to run the search in a separate thread. """

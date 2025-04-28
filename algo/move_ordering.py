@@ -138,18 +138,13 @@ def score_move(move, ply, tt_move_hint):
         return PROMOTION_BASE_SCORE + promo_value
 
     # 3. Captures with enhanced detection
-    is_cap = is_capture(move)
-    if is_cap:
+    if is_capture(move):
         # Use MVV-LVA for capture ordering
         mvv_lva = get_mvv_lva_score(move)
 
         # Heuristic estimate if it's a good capture
-        to_square = move.to_square
-        from_square = move.from_square
-
-        # Get piece types (handle en passant specially)
-        victim_type = chess.PAWN if hasattr(bitboards, 'EN_PASSANT_SQUARE') and to_square == bitboards.EN_PASSANT_SQUARE else get_piece_type_at(to_square)
-        attacker_type = get_piece_type_at(from_square)
+        victim_type = chess.PAWN if hasattr(bitboards, 'EN_PASSANT_SQUARE') and move.to_square == bitboards.EN_PASSANT_SQUARE else get_piece_type_at(move.to_square)
+        attacker_type = get_piece_type_at(move.from_square)
 
         victim_value = PIECE_VALUES.get(victim_type, 0) if victim_type else 0
         attacker_value = PIECE_VALUES.get(attacker_type, 0) if attacker_type else 0
@@ -173,14 +168,14 @@ def score_move(move, ply, tt_move_hint):
             return KILLER_SECOND_SCORE
 
     # 6. Counter move
-    key = f"{move.from_square}{move.to_square}"
+    key = (move.from_square, move.to_square)
     if key in COUNTER_MOVES:
         return COUNTER_MOVE_SCORE
 
     # 7. History heuristic
     if moving_piece_type is not None:
         history_score = HISTORY_HEURISTIC[moving_piece_type][move.to_square]
-        butterfly_idx = move.from_square * 64 + move.to_square
+        butterfly_idx = (move.from_square << 6) | move.to_square
         butterfly_score = BUTTERFLY_HISTORY[moving_piece_type][butterfly_idx]
 
         return history_score + butterfly_score
@@ -200,19 +195,18 @@ def order_moves(move_list, ply, tt_move_hint=None):
         return move_list.copy()
 
     # If TT move is in the list, ensure it gets tried first
+    ordered_moves = []
+    remaining_moves = move_list
     if tt_move_hint and tt_move_hint in move_list:
-        ordered_moves = [tt_move_hint]
+        ordered_moves.append(tt_move_hint)
         remaining_moves = [m for m in move_list if m != tt_move_hint]
-    else:
-        ordered_moves = []
-        remaining_moves = move_list
 
     # Score and sort all remaining moves
     scored_moves = [(move, score_move(move, ply, tt_move_hint)) for move in remaining_moves]
     scored_moves.sort(key=lambda x: x[1], reverse=True)
 
     # Add scored moves to the ordered list
-    ordered_moves.extend([move for move, _ in scored_moves])
+    ordered_moves.extend(move for move, _ in scored_moves)
 
     return ordered_moves
 
@@ -241,7 +235,7 @@ def update_counter_move(prev_move, move):
         return
 
     # Create a key based on the previous move
-    key = f"{prev_move.from_square}{prev_move.to_square}"
+    key = (prev_move.from_square, prev_move.to_square)
     COUNTER_MOVES[key] = move
 
 def update_history_heuristic(move, depth):
@@ -269,7 +263,7 @@ def update_history_heuristic(move, depth):
 
     # Update butterfly history (more specific from-to combination)
     from_square = move.from_square
-    butterfly_idx = from_square * 64 + to_square
+    butterfly_idx = (from_square << 6) | to_square
     current_butterfly = BUTTERFLY_HISTORY[piece_type][butterfly_idx]
     BUTTERFLY_HISTORY[piece_type][butterfly_idx] = int(current_butterfly * decay_factor) + history_bonus * 2
 
