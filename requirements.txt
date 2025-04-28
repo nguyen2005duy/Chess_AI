@@ -1,2 +1,8 @@
 chess
-pygame
+pygame-ce
+numpy
+snakeviz
+tqdmniceui
+hydra-core
+zstandard
+niceui
