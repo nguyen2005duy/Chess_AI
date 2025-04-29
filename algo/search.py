@@ -833,7 +833,7 @@ def find_best_move(board=None, max_depth=6, time_limit_seconds=5.0):
             # If terminal but moves exist (e.g., draw by repetition but can avoid)
             # Just pick the first ordered move
             return order_moves(legal_moves, 0, None)[0]
-        return None  # No legal moves
+        return board.legal_move()[0]  # No legal moves
 
     # Check for opening book move
     if board:
