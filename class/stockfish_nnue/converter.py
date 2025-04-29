@@ -31,11 +31,9 @@ CONFIG = {
     'engine_threads': 1,
     'engine_timeout': 5.0,
     'pgn_paths': [
-        "filter/filtered_pgns/2000-2199/2016_09_2000-2199_30000games.pgn",
         "filter/filtered_pgns/2200-2399/2016_09_2200-2399_20000games.pgn",
         "filter/filtered_pgns/2400-2599/2016_09_2400-2599_10000games.pgn",
-        "filter/filtered_pgns/2400-2599/2016_08_2400-2599_10000games.pgn",
-        "filter/filtered_pgns/2600-3000/2016_07_2600-3000_1782games.pgns"
+
     ],
     'min_elo': 0,
     'batch_size': 1000,
