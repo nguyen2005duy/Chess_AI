@@ -16,7 +16,7 @@ GOOD_CAPTURE_BONUS = 5000     # Additional bonus for good captures
 KILLER_FIRST_SCORE = 8000
 KILLER_SECOND_SCORE = 7000
 COUNTER_MOVE_SCORE = 6000
-CASTLE_MOVE_SCORE = 5000
+CASTLE_MOVE_SCORE = 15000
 
 # Killer moves storage: stores two killer moves per ply
 KILLER_MOVES = [[None, None] for _ in range(64)]  # Max depth 64
