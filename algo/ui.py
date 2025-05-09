@@ -153,8 +153,8 @@ async def trigger_ai_move():
     print("Triggering AI move...")
 
     thread_board = board.copy()
-    engine_time_limit = 5.0 # TODO: Configurable
-    engine_depth_limit = 6  # TODO: Configurable
+    engine_time_limit = 10.0 # TODO: Configurable
+    engine_depth_limit = 4  # TODO: Configurable
 
     try:
         print(f"Running AI search with depth={engine_depth_limit}, time_limit={engine_time_limit}...")

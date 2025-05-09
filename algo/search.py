@@ -239,7 +239,7 @@ def quiescence_search(ply, alpha, beta):
         if score > alpha:
             alpha = score
 
-    return alpha
+    return alpha    
 
 # --- Internal Iterative Deepening (for when no TT move is available) ---
 def internal_iterative_deepening(depth, ply, alpha, beta, is_pv_node):
@@ -322,9 +322,18 @@ def negamax_pruning(depth, ply, alpha, beta, is_pv_node, allow_null_move, tt_bes
     return None, False  # No pruning opportunity
 
 # --- Alpha-Beta Negamax Search (Main function) ---
-def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=True):
+# --- Constants for Search Extensions ---
+MAX_EXTENSIONS = 3  # Maximum number of extensions allowed per search path
+CHECK_EXTENSION = 1  # Extension amount when in check
+PAWN_PUSH_EXTENSION = 1  # Extension for pawns approaching promotion
+RECAPTURE_EXTENSION = 1  # Extension for recapture moves
+
+
+# --- Negamax Search with Enhanced Extensions ---
+def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=True, num_extensions=0, prev_move=None,
+                   prev_was_capture=False):
     """
-    Core PVS Alpha-Beta Negamax search function with TT, NMP, LMR integration.
+    Core PVS Alpha-Beta Negamax search function with TT, NMP, LMR, and Extensions.
     Includes Quiescence Search at the leaves.
     Returns the score from the perspective of the side to move.
     """
@@ -334,25 +343,25 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
     if should_stop_search():
         raise TimeUpException()
 
-    nodes_searched += 1 # Increment node count *after* time check potentially raises
+    nodes_searched += 1  # Increment node count *after* time check potentially raises
 
     # --- Base Cases & Early Exit ---
     # Max depth reached
     if ply >= MAX_PLY:
-        return get_evaluation() # Evaluate at max depth
+        return get_evaluation()  # Evaluate at max depth
 
     # --- Draw Checks ---
     # Check for Repetition (threefold including current position), 50-move, and insufficient material
     if ply > 0 and (is_repetition(2) or bitboards.HALF_MOVE_COUNTER >= 100 or is_insufficient_material_draw()):
-       return DRAW_SCORE
+        return DRAW_SCORE
 
-   # --- Transposition Table Probe ---
+    # --- Transposition Table Probe ---
     # Use original depth for TT lookup
-    tt_score, tt_best_move, tt_hit_used = probe_tt(depth, ply, alpha, beta) # Pass ply for mate distance adjustment
+    tt_score, tt_best_move, tt_hit_used = probe_tt(depth, ply, alpha, beta)  # Pass ply for mate distance adjustment
     # If probe_tt returned a score that caused a cutoff or was exact, and the score is not None, return it.
     # Allows immediate return for non-root nodes, and potentially for root nodes if TT hit was exact.
     if tt_hit_used and tt_score is not None:
-        return tt_score # Return the score directly if probe_tt deemed it usable
+        return tt_score  # Return the score directly if probe_tt deemed it usable
 
     # Check if in check
     king_square = chess.lsb(bitboards.WHITE_KINGS if bitboards.SIDE_TO_MOVE == chess.WHITE else bitboards.BLACK_KINGS)
@@ -367,7 +376,7 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
 
     # If depth limit reached -> Go into Quiescence Search
     if depth <= 0:
-       return quiescence_search(ply, alpha, beta)
+        return quiescence_search(ply, alpha, beta)
 
     # --- EGTB Probe ---
     # Check only if piece count is within tablebase range
@@ -383,14 +392,14 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
             # Convert to evaluation score relative to current player
             if wdl_score == 0:
                 egtb_score = DRAW_SCORE
-            elif wdl_score > 0: # Win or cursed win
+            elif wdl_score > 0:  # Win or cursed win
                 # Use MATE_SCORE adjusted by ply for faster mates
                 egtb_score = MATE_SCORE - ply
-            else: # Loss or blessed loss
+            else:  # Loss or blessed loss
                 egtb_score = -MATE_SCORE + ply
 
             record_tt(MAX_PLY, ply, egtb_score, HASH_FLAG_EXACT, None)
-            return egtb_score 
+            return egtb_score
 
         except chess.syzygy.MissingTableError:
             pass
@@ -398,12 +407,9 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
             print(f"Warning: EGTB probe failed unexpectedly: {e}")
             pass
 
-    # --- Check Extension ---
-    search_depth = depth + 1 if in_check else depth
-
     # --- Pruning Strategies ---
     pruning_result, should_prune = negamax_pruning(
-        search_depth, ply, alpha, beta, is_pv_node, allow_null_move, tt_best_move, in_check
+        depth, ply, alpha, beta, is_pv_node, allow_null_move, tt_best_move, in_check
     )
     if should_prune:
         return pruning_result
@@ -415,22 +421,22 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
     if not legal_moves:
         if in_check:
             # Checkmate
-            mate_score = -CHECKMATE_SCORE + ply # Score indicating being mated
-            record_tt(depth, ply, mate_score, HASH_FLAG_EXACT, None) # No best move when mated
+            mate_score = -CHECKMATE_SCORE + ply  # Score indicating being mated
+            record_tt(depth, ply, mate_score, HASH_FLAG_EXACT, None)  # No best move when mated
             return mate_score
         else:
             # Stalemate
-            record_tt(depth, ply, DRAW_SCORE, HASH_FLAG_EXACT, None) # No best move in stalemate
+            record_tt(depth, ply, DRAW_SCORE, HASH_FLAG_EXACT, None)  # No best move in stalemate
             return DRAW_SCORE
 
     # --- Recursive Search ---
 
-    # Order Moves 
-    ordered_moves = order_moves(legal_moves, ply, tt_best_move) # Pass TT move hint to ordering
+    # Order Moves
+    ordered_moves = order_moves(legal_moves, ply, tt_best_move)  # Pass TT move hint to ordering
 
-    best_score_for_node = -CHECKMATE_SCORE # Initialize with worst possible score
-    best_move_for_node = ordered_moves[0] # Default to first ordered move
-    hash_flag = HASH_FLAG_UPPERBOUND # Start assuming fail-low (alpha isn't raised), making alpha an upper bound
+    best_score_for_node = -CHECKMATE_SCORE  # Initialize with worst possible score
+    best_move_for_node = ordered_moves[0]  # Default to first ordered move
+    hash_flag = HASH_FLAG_UPPERBOUND  # Start assuming fail-low (alpha isn't raised), making alpha an upper bound
     move_count = 0
     searched_moves = 0
 
@@ -456,8 +462,25 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
         push_move(move)
 
         # Check if this move gives check (used for check extensions)
-        opp_king_square = chess.lsb(bitboards.BLACK_KINGS if bitboards.SIDE_TO_MOVE == chess.WHITE else bitboards.WHITE_KINGS)
-        is_check_move = is_square_attacked(opp_king_square, bitboards.SIDE_TO_MOVE)
+        opp_king_square = chess.lsb(
+            bitboards.BLACK_KINGS if bitboards.SIDE_TO_MOVE == chess.WHITE else bitboards.WHITE_KINGS)
+        gives_check = is_square_attacked(opp_king_square, bitboards.SIDE_TO_MOVE)
+
+        # --- Search Extensions ---
+        extension = 0
+        if num_extensions < MAX_EXTENSIONS:
+            # Check extension - extend search when in check
+            if gives_check:
+                extension = CHECK_EXTENSION
+            # Pawn push extension - extend search when pawns are close to promotion
+            elif moving_piece_type_local == chess.PAWN:
+                target_rank = chess.square_rank(move.to_square)
+                if (bitboards.SIDE_TO_MOVE == chess.WHITE and target_rank == 6) or \
+                        (bitboards.SIDE_TO_MOVE == chess.BLACK and target_rank == 1):
+                    extension = PAWN_PUSH_EXTENSION
+            # Recapture extension - extend search for recaptures at the same square
+            elif prev_move and is_capture and prev_was_capture and move.to_square == prev_move.to_square:
+                extension = RECAPTURE_EXTENSION
 
         # Track that we actually searched this move
         searched_moves += 1
@@ -465,63 +488,77 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
         # --- Late Move Reduction (LMR) ---
         reduction = 0
         # Apply LMR if: sufficient depth, not the first few moves, not a capture/promo, not in check, not giving check, and not a PV node.
-        if depth >= LMR_BASE_DEPTH and move_count > LMR_MIN_MOVE_COUNT and not is_capture and not is_promotion and not in_check and not is_check_move and not is_pv_node:
+        if depth >= LMR_BASE_DEPTH and move_count > LMR_MIN_MOVE_COUNT and not is_capture and not is_promotion and not in_check and not gives_check and not is_pv_node:
             # Calculate reduction based on depth and move count
             reduction = int(LMR_REDUCTION_FACTOR * (depth - 1) + 0.5 * math.log(move_count))
-            reduction = min(depth - 2, max(0, reduction)) # Keep reduction in reasonable bounds
+            reduction = min(depth - 2, max(0, reduction))  # Keep reduction in reasonable bounds
+
+        # Use adjusted depth based on extensions
+        search_depth = depth - 1 + extension
 
         # --- Principal Variation Search (PVS) ---
-        # Use search_depth (potentially extended) for recursive call depth
-        current_search_depth = search_depth - 1 - reduction
-
         # First move: Full window search
         if searched_moves == 1:
-            score = -negamax_search(current_search_depth, ply + 1, -beta, -alpha, is_pv_node=True, allow_null_move=True)
+            score = -negamax_search(search_depth - reduction, ply + 1, -beta, -alpha,
+                                    is_pv_node=True, allow_null_move=True,
+                                    num_extensions=num_extensions + extension,
+                                    prev_move=move, prev_was_capture=is_capture)
         else:
             # Try LMR with null window for efficiency
-            score = -negamax_search(current_search_depth, ply + 1, -alpha - 1, -alpha, is_pv_node=False, allow_null_move=True)
+            score = -negamax_search(search_depth - reduction, ply + 1, -alpha - 1, -alpha,
+                                    is_pv_node=False, allow_null_move=True,
+                                    num_extensions=num_extensions + extension,
+                                    prev_move=move, prev_was_capture=is_capture)
 
             # If reduced search failed high but didn't exceed beta, re-search with full depth
             if score > alpha and score < beta:
                 # If reduction was applied and search returned a better score than alpha
                 if reduction > 0:
                     # Re-search with full depth, narrow window
-                    score = -negamax_search(search_depth - 1, ply + 1, -alpha - 1, -alpha, is_pv_node=False, allow_null_move=True)
+                    score = -negamax_search(search_depth, ply + 1, -alpha - 1, -alpha,
+                                            is_pv_node=False, allow_null_move=True,
+                                            num_extensions=num_extensions + extension,
+                                            prev_move=move, prev_was_capture=is_capture)
 
                 # If score still exceeds alpha after potential re-search, do a full-window PV search
                 if score > alpha and score < beta:
-                    score = -negamax_search(search_depth - 1, ply + 1, -beta, -alpha, is_pv_node=True, allow_null_move=True)
+                    score = -negamax_search(search_depth, ply + 1, -beta, -alpha,
+                                            is_pv_node=True, allow_null_move=True,
+                                            num_extensions=num_extensions + extension,
+                                            prev_move=move, prev_was_capture=is_capture)
         pop_move()
 
         # Fail-High (Beta Cutoff)
         if score >= beta:
             # Store TT entry with LOWER bound flag (fail-high: score is >= beta)
-            record_tt(depth, ply, beta, HASH_FLAG_LOWERBOUND, move) # Store beta as score, Pass ply
+            record_tt(depth, ply, beta, HASH_FLAG_LOWERBOUND, move)  # Store beta as score, Pass ply
 
             # --- Update Heuristics on Beta Cutoff (Phase 4.2 Enhancement) ---
             if not is_capture and move.promotion is None:
                 update_killer_moves(move, ply)
-                update_history_heuristic(move, depth) # Use original depth as weight
+                update_history_heuristic(move, depth)  # Use original depth as weight
 
-            return beta # Pruning occurs
+            return beta  # Pruning occurs
 
         # Update Alpha (New Best Move Found)
         if score > alpha:
             alpha = score
-            best_score_for_node = score # Store the actual best score found
+            best_score_for_node = score  # Store the actual best score found
             best_move_for_node = move
-            hash_flag = HASH_FLAG_EXACT # We found a score within the (alpha, beta) window
-            is_pv_node = True # Found a new best move, this path segment is PV
+            hash_flag = HASH_FLAG_EXACT  # We found a score within the (alpha, beta) window
+            is_pv_node = True  # Found a new best move, this path segment is PV
 
     # --- Record to Transposition Table ---
-    if best_score_for_node <= alpha: # Initial alpha wasn't improved, so alpha is an upper bound
-         # This condition corresponds to the initial hash_flag = HASH_FLAG_UPPERBOUND
+    if best_score_for_node <= alpha:  # Initial alpha wasn't improved, so alpha is an upper bound
+        # This condition corresponds to the initial hash_flag = HASH_FLAG_UPPERBOUND
         record_tt(depth, ply, alpha, HASH_FLAG_UPPERBOUND, best_move_for_node)
-    elif hash_flag == HASH_FLAG_EXACT: # Alpha was improved, exact score found
+    elif hash_flag == HASH_FLAG_EXACT:  # Alpha was improved, exact score found
         record_tt(depth, ply, best_score_for_node, HASH_FLAG_EXACT, best_move_for_node)
     # (Beta cutoff case handled inside loop)
 
-    return alpha # Return the best score found (alpha)
+    return alpha  # Return the best score found (alpha)
+
+
 # --- Root Search with Aspiration Windows ---
 def root_search(depth, prev_score):
     """Performs a search with aspiration windows for better efficiency"""
@@ -534,7 +571,8 @@ def root_search(depth, prev_score):
 
     if depth <= 3 or prev_score is None or abs(prev_score) > MATE_THRESHOLD:
         # For early depths or unknown scores, use full window
-        return negamax_search(depth, 0, -CHECKMATE_SCORE, CHECKMATE_SCORE)
+        return negamax_search(depth, 0, -CHECKMATE_SCORE, CHECKMATE_SCORE,
+                              num_extensions=0, prev_move=None, prev_was_capture=False)
 
     # Start with a narrow window around previous score
     alpha = max(-CHECKMATE_SCORE, prev_score - aspiration_window)
@@ -545,7 +583,8 @@ def root_search(depth, prev_score):
     max_failures = 4
 
     while window_failures < max_failures:
-        score = negamax_search(depth, 0, alpha, beta)
+        score = negamax_search(depth, 0, alpha, beta,
+                               num_extensions=0, prev_move=None, prev_was_capture=False)
 
         # Check if search failed high or low
         if score <= alpha:
@@ -570,7 +609,8 @@ def root_search(depth, prev_score):
 
     # If we reach here, we've hit the maximum failures
     # Fall back to a full window search
-    return negamax_search(depth, 0, -CHECKMATE_SCORE, CHECKMATE_SCORE)
+    return negamax_search(depth, 0, -CHECKMATE_SCORE, CHECKMATE_SCORE,
+                          num_extensions=0, prev_move=None, prev_was_capture=False)
 
 # --- Position Evaluation Helpers ---
 def is_terminal_position():
@@ -809,7 +849,7 @@ def iterative_deepening_search(max_depth, time_limit_seconds):
         return best_move_overall, best_score_overall
 
 # --- Public Interface ---
-def find_best_move(board=None, max_depth=6, time_limit_seconds=5.0):
+def find_best_move(board=None, max_depth=4, time_limit_seconds=10.0):
     """
     Public function to find the best move in the current position.
     If board is provided, initializes internal state from it first.

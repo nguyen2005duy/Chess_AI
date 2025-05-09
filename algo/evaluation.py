@@ -154,7 +154,7 @@ def calculate_passed_pawn_and_isolation_score():
     # White passed pawns and isolated pawns
     white_isolated_count = 0
     for square in chess.SquareSet(bitboards.WHITE_PAWNS):
-        # Check for passed pawn (no black pawns ahead on same or adjacent files)
+        # Check for passed p    awn (no black pawns ahead on same or adjacent files)
         file_idx = square % 8
         rank_idx = square // 8
 
@@ -208,29 +208,78 @@ def calculate_passed_pawn_and_isolation_score():
 
     return score
 
-def calculate_mobility_score():
-    """Calculates a basic mobility score based on current bitboards."""
-    white_mobility = 0
-    black_mobility = 0
-    mobility_weight = 5
-    for square in chess.SquareSet(bitboards.WHITE_KNIGHTS): # Use SquareSet iteration
-        white_mobility += (KNIGHT_ATTACKS[square] & ~bitboards.WHITE_PIECES).bit_count() 
-    for square in chess.SquareSet(bitboards.WHITE_BISHOPS): # Use SquareSet iteration
-        white_mobility += (get_bishop_attack(square, bitboards.ALL_PIECES) & ~bitboards.WHITE_PIECES).bit_count()
-    for square in chess.SquareSet(bitboards.WHITE_ROOKS): # Use SquareSet iteration
-        white_mobility += (get_rook_attack(square, bitboards.ALL_PIECES) & ~bitboards.WHITE_PIECES).bit_count()
-    for square in chess.SquareSet(bitboards.WHITE_QUEENS): # Use SquareSet iteration
-        white_mobility += ((get_rook_attack(square, bitboards.ALL_PIECES) | get_bishop_attack(square, bitboards.ALL_PIECES)) & ~bitboards.WHITE_PIECES).bit_count()
-    for square in chess.SquareSet(bitboards.BLACK_KNIGHTS): # Use SquareSet iteration
-        black_mobility += (KNIGHT_ATTACKS[square] & ~bitboards.BLACK_PIECES).bit_count()
-    for square in chess.SquareSet(bitboards.BLACK_BISHOPS): # Use SquareSet iteration
-        black_mobility += (get_bishop_attack(square, bitboards.ALL_PIECES) & ~bitboards.BLACK_PIECES).bit_count()
-    for square in chess.SquareSet(bitboards.BLACK_ROOKS): # Use SquareSet iteration
-        black_mobility += (get_rook_attack(square, bitboards.ALL_PIECES) & ~bitboards.BLACK_PIECES).bit_count()
-    for square in chess.SquareSet(bitboards.BLACK_QUEENS): # Use SquareSet iteration
-        black_mobility += ((get_rook_attack(square, bitboards.ALL_PIECES) | get_bishop_attack(square, bitboards.ALL_PIECES)) & ~bitboards.BLACK_PIECES).bit_count()
-    return (white_mobility - black_mobility) * mobility_weight
 
+def calculate_mobility_score():
+    """Calculates a balanced mobility score based on current bitboards."""
+    white_mobility_knights = 0
+    white_mobility_bishops = 0
+    white_mobility_rooks = 0
+    white_mobility_queens = 0
+
+    black_mobility_knights = 0
+    black_mobility_bishops = 0
+    black_mobility_rooks = 0
+    black_mobility_queens = 0
+
+    # Fine-tuned mobility weights for different piece types
+    knight_mobility_weight = 3
+    bishop_mobility_weight = 3
+    rook_mobility_weight = 2
+    queen_mobility_weight = 1
+
+    # Calculate white mobility
+    for square in chess.SquareSet(bitboards.WHITE_KNIGHTS):
+        white_mobility_knights += (KNIGHT_ATTACKS[square] & ~bitboards.WHITE_PIECES).bit_count()
+
+    for square in chess.SquareSet(bitboards.WHITE_BISHOPS):
+        white_mobility_bishops += (
+                    get_bishop_attack(square, bitboards.ALL_PIECES) & ~bitboards.WHITE_PIECES).bit_count()
+
+    for square in chess.SquareSet(bitboards.WHITE_ROOKS):
+        white_mobility_rooks += (get_rook_attack(square, bitboards.ALL_PIECES) & ~bitboards.WHITE_PIECES).bit_count()
+
+    for square in chess.SquareSet(bitboards.WHITE_QUEENS):
+        white_mobility_queens += ((get_rook_attack(square, bitboards.ALL_PIECES) | get_bishop_attack(square,
+                                                                                                     bitboards.ALL_PIECES)) & ~bitboards.WHITE_PIECES).bit_count()
+
+    # Calculate black mobility
+    for square in chess.SquareSet(bitboards.BLACK_KNIGHTS):
+        black_mobility_knights += (KNIGHT_ATTACKS[square] & ~bitboards.BLACK_PIECES).bit_count()
+
+    for square in chess.SquareSet(bitboards.BLACK_BISHOPS):
+        black_mobility_bishops += (
+                    get_bishop_attack(square, bitboards.ALL_PIECES) & ~bitboards.BLACK_PIECES).bit_count()
+
+    for square in chess.SquareSet(bitboards.BLACK_ROOKS):
+        black_mobility_rooks += (get_rook_attack(square, bitboards.ALL_PIECES) & ~bitboards.BLACK_PIECES).bit_count()
+
+    for square in chess.SquareSet(bitboards.BLACK_QUEENS):
+        black_mobility_queens += ((get_rook_attack(square, bitboards.ALL_PIECES) | get_bishop_attack(square,
+                                                                                                     bitboards.ALL_PIECES)) & ~bitboards.BLACK_PIECES).bit_count()
+
+    # Calculate the weighted total mobility scores
+    white_mobility = (
+            white_mobility_knights * knight_mobility_weight +
+            white_mobility_bishops * bishop_mobility_weight +
+            white_mobility_rooks * rook_mobility_weight +
+            white_mobility_queens * queen_mobility_weight
+    )
+
+    black_mobility = (
+            black_mobility_knights * knight_mobility_weight +
+            black_mobility_bishops * bishop_mobility_weight +
+            black_mobility_rooks * rook_mobility_weight +
+            black_mobility_queens * queen_mobility_weight
+    )
+
+    # Calculate phase for mobility scaling
+    # phase = calculate_game_phase()
+
+    # Scale mobility importance based on game phase
+    # In endgame, mobility is often more important
+    # mobility_scaling = 1.0 + ((256 - phase) / 256.0) * 0.3  # Up to 30% more important in endgames
+
+    return int(white_mobility - black_mobility)
 def get_king_pawn_shield_square_set(king_square, color):
     """Generate squares that should contain pawns to shield the king."""
     file_idx = king_square % 8
@@ -279,131 +328,431 @@ def get_king_pawn_shield_square_set(king_square, color):
 
 def calculate_game_phase():
     """Calculates the game phase (0=Endgame, 256=Middlegame) based on remaining material."""
-    max_material = (
-        (4 * MATERIAL_VALUES[chess.KNIGHT]) + (4 * MATERIAL_VALUES[chess.BISHOP]) +
-        (4 * MATERIAL_VALUES[chess.ROOK]) + (2 * MATERIAL_VALUES[chess.QUEEN])
+    PawnPhase = 0
+    KnightPhase = 1
+    BishopPhase = 1
+    RookPhase = 2
+    QueenPhase = 4
+    total_phase = (
+        (4 * KnightPhase) + (4 * BishopPhase) +
+        (4 * RookPhase) + (2 * QueenPhase)
     )
-    current_material = 0
-    current_material += (bitboards.WHITE_KNIGHTS | bitboards.BLACK_KNIGHTS).bit_count() * MATERIAL_VALUES[chess.KNIGHT]
-    current_material += (bitboards.WHITE_BISHOPS | bitboards.BLACK_BISHOPS).bit_count() * MATERIAL_VALUES[chess.BISHOP]
-    current_material += (bitboards.WHITE_ROOKS | bitboards.BLACK_ROOKS).bit_count() * MATERIAL_VALUES[chess.ROOK]
-    current_material += (bitboards.WHITE_QUEENS | bitboards.BLACK_QUEENS).bit_count() * MATERIAL_VALUES[chess.QUEEN]
-    if max_material == 0: return 0
-    phase_ratio = min(1.0, max(0.0, current_material / max_material))
-    phase = int(phase_ratio * 256)
-    return min(256, max(0, phase))
+    current_material = total_phase
+    current_material -= (bitboards.WHITE_KNIGHTS | bitboards.BLACK_KNIGHTS).bit_count() * KnightPhase
+    current_material -= (bitboards.WHITE_BISHOPS | bitboards.BLACK_BISHOPS).bit_count() * BishopPhase
+    current_material -= (bitboards.WHITE_ROOKS | bitboards.BLACK_ROOKS).bit_count() * RookPhase
+    current_material -= (bitboards.WHITE_QUEENS | bitboards.BLACK_QUEENS).bit_count() * QueenPhase
 
+    return (current_material * 256 +(total_phase / 2)) / total_phase
+
+
+def calculate_pawn_structure_score():
+    """Calculate scores for pawn structure: doubled pawns, backward pawns, pawn chains, and pawn islands."""
+    score = 0
+
+    # Calculate doubled pawns penalty
+    doubled_pawn_score = calculate_doubled_pawns_score()
+
+    # Calculate backward pawns penalty
+    backward_pawn_score = calculate_backward_pawns_score()
+
+    # Calculate pawn chains and pawn islands score
+    pawn_chains_islands_score = calculate_pawn_chains_and_islands_score()
+
+    # Combine scores
+    score = doubled_pawn_score + backward_pawn_score + pawn_chains_islands_score
+
+    return score
+
+
+def calculate_doubled_pawns_score():
+    """Calculate penalty for doubled pawns."""
+    score = 0
+    doubled_pawn_penalty = -20  # Penalty per doubled pawn
+
+    # Create file masks for doubled pawn detection
+    file_masks = [0] * 8
+    for file_idx in range(8):
+        file_mask = 0
+        for rank_idx in range(8):
+            file_mask |= (1 << (rank_idx * 8 + file_idx))
+        file_masks[file_idx] = file_mask
+
+    # Check white doubled pawns
+    for file_idx in range(8):
+        white_pawns_in_file = (bitboards.WHITE_PAWNS & file_masks[file_idx]).bit_count()
+        if white_pawns_in_file > 1:
+            # Doubled pawns (or tripled) found on this file
+            score += doubled_pawn_penalty * (white_pawns_in_file - 1)
+
+    # Check black doubled pawns
+    for file_idx in range(8):
+        black_pawns_in_file = (bitboards.BLACK_PAWNS & file_masks[file_idx]).bit_count()
+        if black_pawns_in_file > 1:
+            # Doubled pawns (or tripled) found on this file
+            score -= doubled_pawn_penalty * (black_pawns_in_file - 1)
+
+    return score
+
+
+def calculate_backward_pawns_score():
+    """Calculate penalty for backward pawns."""
+    score = 0
+    backward_pawn_penalty = -15  # Penalty per backward pawn
+
+    # Create file masks
+    file_masks = [0] * 8
+    for file_idx in range(8):
+        file_mask = 0
+        for rank_idx in range(8):
+            file_mask |= (1 << (rank_idx * 8 + file_idx))
+        file_masks[file_idx] = file_mask
+
+    # Check white backward pawns
+    for square in chess.SquareSet(bitboards.WHITE_PAWNS):
+        file_idx = square % 8
+        rank_idx = square // 8
+
+        # Skip pawns on the edge files (they can't have supporting pawns on both sides)
+        if file_idx == 0 or file_idx == 7:
+            continue
+
+        # A pawn is backward if:
+        # 1. It has no supporting pawns (no friendly pawns on adjacent files that are on the same rank or behind)
+        # 2. It cannot safely advance (square in front is attacked by enemy pawn)
+
+        # Check for supporting pawns
+        has_support = False
+
+        # Left adjacent file support check
+        left_file_support_mask = file_masks[file_idx - 1]
+        for check_rank in range(rank_idx, 8):  # Check same rank and behind
+            left_support_square = check_rank * 8 + (file_idx - 1)
+            if bitboards.WHITE_PAWNS & (1 << left_support_square):
+                has_support = True
+                break
+
+        # Right adjacent file support check if not already supported
+        if not has_support:
+            right_file_support_mask = file_masks[file_idx + 1]
+            for check_rank in range(rank_idx, 8):  # Check same rank and behind
+                right_support_square = check_rank * 8 + (file_idx + 1)
+                if bitboards.WHITE_PAWNS & (1 << right_support_square):
+                    has_support = True
+                    break
+
+        # Check if the pawn is blocked from advancing
+        square_in_front = (rank_idx - 1) * 8 + file_idx
+        if rank_idx > 0:
+            # Check if square in front is attacked by black pawn
+            is_attacked = False
+
+            # Check diagonal attacks from black pawns
+            if file_idx > 0:  # Check left diagonal
+                left_attack_square = (rank_idx - 1) * 8 + (file_idx - 1)
+                if bitboards.BLACK_PAWNS & (1 << left_attack_square):
+                    is_attacked = True
+
+            if file_idx < 7 and not is_attacked:  # Check right diagonal
+                right_attack_square = (rank_idx - 1) * 8 + (file_idx + 1)
+                if bitboards.BLACK_PAWNS & (1 << right_attack_square):
+                    is_attacked = True
+
+            # If not supported and attacked, it's a backward pawn
+            if not has_support and is_attacked:
+                score += backward_pawn_penalty
+
+    # Check black backward pawns (similar logic but reversed direction)
+    for square in chess.SquareSet(bitboards.BLACK_PAWNS):
+        file_idx = square % 8
+        rank_idx = square // 8
+
+        # Skip pawns on the edge files
+        if file_idx == 0 or file_idx == 7:
+            continue
+
+        # Check for supporting pawns
+        has_support = False
+
+        # Left adjacent file support check
+        left_file_support_mask = file_masks[file_idx - 1]
+        for check_rank in range(0, rank_idx + 1):  # Check same rank and behind (for black)
+            left_support_square = check_rank * 8 + (file_idx - 1)
+            if bitboards.BLACK_PAWNS & (1 << left_support_square):
+                has_support = True
+                break
+
+        # Right adjacent file support check if not already supported
+        if not has_support:
+            right_file_support_mask = file_masks[file_idx + 1]
+            for check_rank in range(0, rank_idx + 1):  # Check same rank and behind (for black)
+                right_support_square = check_rank * 8 + (file_idx + 1)
+                if bitboards.BLACK_PAWNS & (1 << right_support_square):
+                    has_support = True
+                    break
+
+        # Check if the pawn is blocked from advancing
+        if rank_idx < 7:
+            square_in_front = (rank_idx + 1) * 8 + file_idx
+
+            # Check if square in front is attacked by white pawn
+            is_attacked = False
+
+            # Check diagonal attacks from white pawns
+            if file_idx > 0:  # Check left diagonal
+                left_attack_square = (rank_idx + 1) * 8 + (file_idx - 1)
+                if bitboards.WHITE_PAWNS & (1 << left_attack_square):
+                    is_attacked = True
+
+            if file_idx < 7 and not is_attacked:  # Check right diagonal
+                right_attack_square = (rank_idx + 1) * 8 + (file_idx + 1)
+                if bitboards.WHITE_PAWNS & (1 << right_attack_square):
+                    is_attacked = True
+
+            # If not supported and attacked, it's a backward pawn
+            if not has_support and is_attacked:
+                score -= backward_pawn_penalty
+
+    return score
+
+
+def calculate_pawn_chains_and_islands_score():
+    """Calculate scores for pawn chains and pawn islands."""
+    score = 0
+
+    # Constants
+    pawn_chain_bonus = 5  # Bonus per pawn in a chain
+    pawn_island_penalty = -10  # Penalty per pawn island
+
+    # Create file masks
+    file_masks = [0] * 8
+    for file_idx in range(8):
+        file_mask = 0
+        for rank_idx in range(8):
+            file_mask |= (1 << (rank_idx * 8 + file_idx))
+        file_masks[file_idx] = file_mask
+
+    # Calculate white pawn chains
+    white_chain_count = 0
+    for square in chess.SquareSet(bitboards.WHITE_PAWNS):
+        file_idx = square % 8
+        rank_idx = square // 8
+
+        # Check if this pawn is supporting another pawn diagonally
+        is_supporting = False
+
+        # Check left diagonal support
+        if file_idx > 0 and rank_idx > 0:
+            left_diag_square = (rank_idx - 1) * 8 + (file_idx - 1)
+            if bitboards.WHITE_PAWNS & (1 << left_diag_square):
+                is_supporting = True
+                white_chain_count += 1
+
+        # Check right diagonal support
+        if file_idx < 7 and rank_idx > 0 and not is_supporting:
+            right_diag_square = (rank_idx - 1) * 8 + (file_idx + 1)
+            if bitboards.WHITE_PAWNS & (1 << right_diag_square):
+                is_supporting = True
+                white_chain_count += 1
+
+    # Calculate black pawn chains
+    black_chain_count = 0
+    for square in chess.SquareSet(bitboards.BLACK_PAWNS):
+        file_idx = square % 8
+        rank_idx = square // 8
+
+        # Check if this pawn is supporting another pawn diagonally
+        is_supporting = False
+
+        # Check left diagonal support
+        if file_idx > 0 and rank_idx < 7:
+            left_diag_square = (rank_idx + 1) * 8 + (file_idx - 1)
+            if bitboards.BLACK_PAWNS & (1 << left_diag_square):
+                is_supporting = True
+                black_chain_count += 1
+
+        # Check right diagonal support
+        if file_idx < 7 and rank_idx < 7 and not is_supporting:
+            right_diag_square = (rank_idx + 1) * 8 + (file_idx + 1)
+            if bitboards.BLACK_PAWNS & (1 << right_diag_square):
+                is_supporting = True
+                black_chain_count += 1
+
+    # Add pawn chain bonus
+    score += white_chain_count * pawn_chain_bonus
+    score -= black_chain_count * pawn_chain_bonus
+
+    # Calculate white pawn islands
+    white_islands = 0
+    files_with_white_pawns = [False] * 8
+
+    for file_idx in range(8):
+        if (bitboards.WHITE_PAWNS & file_masks[file_idx]) != 0:
+            files_with_white_pawns[file_idx] = True
+
+    # Count islands (groups of consecutive files with pawns)
+    in_island = False
+    for file_idx in range(8):
+        if files_with_white_pawns[file_idx]:
+            if not in_island:
+                white_islands += 1
+                in_island = True
+        else:
+            in_island = False
+
+    # Calculate black pawn islands
+    black_islands = 0
+    files_with_black_pawns = [False] * 8
+
+    for file_idx in range(8):
+        if (bitboards.BLACK_PAWNS & file_masks[file_idx]) != 0:
+            files_with_black_pawns[file_idx] = True
+
+    # Count islands (groups of consecutive files with pawns)
+    in_island = False
+    for file_idx in range(8):
+        if files_with_black_pawns[file_idx]:
+            if not in_island:
+                black_islands += 1
+                in_island = True
+        else:
+            in_island = False
+
+    # Add pawn island penalty (more than 1 island is penalized)
+    if white_islands > 1:
+        score += (white_islands - 1) * pawn_island_penalty
+    if black_islands > 1:
+        score -= (black_islands - 1) * pawn_island_penalty
+
+    return score
 
 def calculate_king_pawn_shield_score():
     """Calculate pawn shield score for kings in opening and middlegame only."""
     score = 0
-    game_phase = calculate_game_phase()
+    # Constants for material weights (extracted from the C# code snippet)
+    rookEndgameWeight = 20
+    bishopEndgameWeight = 10
+    knightEndgameWeight = 10
+    queenEndgameWeight = 45
 
-    # Early return if we're in endgame (game_phase close to 0)
-    if game_phase < 32:  # Consider endgame if phase is less than ~12% of max (256)
-        return 0
+    # Calculate pieces for endgame transition
+    numWQueens = bitboards.WHITE_QUEENS.bit_count()
+    numWRooks = bitboards.WHITE_ROOKS.bit_count()
+    numWBishops = bitboards.WHITE_BISHOPS.bit_count()
+    numWKnights = bitboards.WHITE_KNIGHTS.bit_count()
+    numBQueens =  bitboards.BLACK_QUEENS.bit_count()
+    numBRooks = bitboards.BLACK_ROOKS.bit_count()
+    numBBishops =  bitboards.BLACK_BISHOPS.bit_count()
+    numBKnights =  bitboards.BLACK_KNIGHTS.bit_count()
 
-    # Calculate how much we should weight the pawn shield evaluation (1.0 in opening, gradually less in middlegame)
-    phase_weight = min(1.0, game_phase / 256.0)
+    # Calculate endgame transition (based on the C# code)
+    endgameStartWeight = 2 * rookEndgameWeight + 2 * bishopEndgameWeight + 2 * knightEndgameWeight + queenEndgameWeight
+    WendgameWeightSum = numWQueens * queenEndgameWeight + numWRooks * rookEndgameWeight + numWBishops * bishopEndgameWeight + numWKnights * knightEndgameWeight
+    BendgameWeightSum = numBQueens * queenEndgameWeight + numBRooks * rookEndgameWeight + numBBishops * bishopEndgameWeight + numBKnights * knightEndgameWeight
+    WendgameT = 1 - min(1, WendgameWeightSum / endgameStartWeight)
+    BendgameT = 1 - min(1, BendgameWeightSum / endgameStartWeight)
 
-    # White king pawn shield
-    white_king_square = chess.SquareSet(bitboards.WHITE_KINGS).pop()
-    white_king_file = white_king_square % 8
-
-    # Only evaluate shield for kingside/queenside castling positions
-    if white_king_file <= 2 or white_king_file >= 5:
-        shield_squares = get_king_pawn_shield_square_set(white_king_square, chess.WHITE)
-        white_penalty = 0
-
-        for i, square in enumerate(shield_squares[:3]):  # First rank of shield
-            if not (bitboards.WHITE_PAWNS & (1 << square)):
-                # Check if there's a pawn in the second rank of shield
-                if len(shield_squares) > 3 and i + 3 < len(shield_squares) and (
-                        bitboards.WHITE_PAWNS & (1 << shield_squares[i + 3])):
-                    white_penalty += KING_PAWN_SHIELD_SCORES[i + 3]
-                else:
-                    white_penalty += KING_PAWN_SHIELD_SCORES[i]
-
-        white_penalty *= white_penalty  # Square the penalty as in the original
-        pawn_shield_weight = phase_weight  # Use our game phase weight
-        if bitboards.BLACK_QUEENS == 0:
-            pawn_shield_weight *= 0.6  # Reduce importance if opponent has no queen
-
-        score -= int(white_penalty * pawn_shield_weight)
-    else:
-        # King in center penalty (uncastled) - only in opening/middlegame
-        # Approximate enemy piece development score
-        enemy_development = 0
-        for piece_type in [chess.KNIGHT, chess.BISHOP]:
-            bb = getattr(bitboards, f"BLACK_{chess.piece_name(piece_type).upper()}S", 0)
-            # Count developed minor pieces (not on back rank)
-            for square in chess.SquareSet(bb):
-                if square // 8 != 0:  # Not on first rank
-                    enemy_development += 1
-
-        enemy_development_score = min(1.0, enemy_development / 4.0)
-        uncastled_penalty = int(80 * enemy_development_score)
-        score -= uncastled_penalty * phase_weight
-
-    # Black king pawn shield - similar logic
-    black_king_square = chess.SquareSet(bitboards.BLACK_KINGS).pop()
-    black_king_file = black_king_square % 8
-
-    if black_king_file <= 2 or black_king_file >= 5:
-        shield_squares = get_king_pawn_shield_square_set(black_king_square, chess.BLACK)
-        black_penalty = 0
-
-        for i, square in enumerate(shield_squares[:3]):  # First rank of shield
-            if not (bitboards.BLACK_PAWNS & (1 << square)):
-                # Check if there's a pawn in the second rank of shield
-                if len(shield_squares) > 3 and i + 3 < len(shield_squares) and (
-                        bitboards.BLACK_PAWNS & (1 << shield_squares[i + 3])):
-                    black_penalty += KING_PAWN_SHIELD_SCORES[i + 3]
-                else:
-                    black_penalty += KING_PAWN_SHIELD_SCORES[i]
-
-        black_penalty *= black_penalty  # Square the penalty
+    # We use the inverse of endgameT as our phase weight (1.0 in opening, gradually less in middlegame)
+    if BendgameT < 1:
+        phase_weight = 1 - BendgameT
         pawn_shield_weight = phase_weight
-        if bitboards.WHITE_QUEENS == 0:
+        if bitboards.BLACK_QUEENS == 0 or bitboards.BLACK_QUEENS.bit_count() == 0:
             pawn_shield_weight *= 0.6  # Reduce importance if opponent has no queen
 
-        score += int(black_penalty * pawn_shield_weight)
-    else:
-        # Uncastled black king penalty - only in opening/middlegame
-        enemy_development = 0
-        for piece_type in [chess.KNIGHT, chess.BISHOP]:
-            bb = getattr(bitboards, f"WHITE_{chess.piece_name(piece_type).upper()}S", 0)
-            # Count developed minor pieces
-            for square in chess.SquareSet(bb):
-                if square // 8 != 7:  # Not on last rank
-                    enemy_development += 1
-
-        enemy_development_score = min(1.0, enemy_development / 4.0)
-        uncastled_penalty = int(80 * enemy_development_score)
-        score += uncastled_penalty * phase_weight
-
-    # Only evaluate open files against kings in opening/middlegame
-    if game_phase > 32:
-        # Open files against kings (penalizes king safety when rooks/queens can attack)
+        # White king pawn shield
+        white_king_square = chess.SquareSet(bitboards.WHITE_KINGS).pop()
         white_king_file = white_king_square % 8
-        black_king_file = black_king_square % 8
+
+        # Only evaluate shield for kingside/queenside castling positions
+        if white_king_file <= 2 or white_king_file >= 5:
+            shield_squares = get_king_pawn_shield_square_set(white_king_square, chess.WHITE)
+            white_penalty = 0
+
+            for i, square in enumerate(shield_squares[:3]):  # First rank of shield
+                if not (bitboards.WHITE_PAWNS & (1 << square)):
+                    # Check if there's a pawn in the second rank of shield
+                    if len(shield_squares) > 3 and i + 3 < len(shield_squares) and (
+                            bitboards.WHITE_PAWNS & (1 << shield_squares[i + 3])):
+                        white_penalty += KING_PAWN_SHIELD_SCORES[i + 3]
+                    else:
+                        white_penalty += KING_PAWN_SHIELD_SCORES[i]
+
+            white_penalty *= white_penalty  # Square the penalty as in the original
+            score -= int(white_penalty * pawn_shield_weight)
+        else:
+            # King in center penalty (uncastled) - only in opening/middlegame
+            # Approximate enemy piece development score
+            enemy_development = 0
+            for piece_type in [chess.KNIGHT, chess.BISHOP]:
+                bb = getattr(bitboards, f"BLACK_{chess.piece_name(piece_type).upper()}S", 0)
+                # Count developed minor pieces (not on back rank)
+                for square in chess.SquareSet(bb):
+                    if square // 8 != 0:  # Not on first rank
+                        enemy_development += 1
+
+            enemy_development_score = min(1.0, enemy_development / 4.0)
+            uncastled_penalty = int(50 * enemy_development_score)
+            score -= uncastled_penalty * pawn_shield_weight
+        white_king_file = white_king_square % 8
 
         # Only check open files if opponent has rooks or queens
-        if bitboards.BLACK_ROOKS.bit_count() + bitboards.BLACK_QUEENS.bit_count() > 0:
+        if numBRooks > 1 or (numBRooks > 0 and numBQueens > 0):
             white_penalty = evaluate_open_files_against_king(white_king_file, bitboards.WHITE_PAWNS,
                                                              bitboards.BLACK_PAWNS,
                                                              bitboards.BLACK_ROOKS.bit_count(),
                                                              bitboards.BLACK_QUEENS.bit_count())
-            score -= white_penalty * phase_weight
+            score -= white_penalty * pawn_shield_weight
 
-        if bitboards.WHITE_ROOKS.bit_count() + bitboards.WHITE_QUEENS.bit_count() > 0:
+    if WendgameT < 1:
+        phase_weight = 1 - WendgameT
+        # Black king pawn shield - similar logic
+        pawn_shield_weight = phase_weight
+        if bitboards.WHITE_QUEENS == 0 or bitboards.WHITE_QUEENS.bit_count() == 0:
+            pawn_shield_weight *= 0.6  # Reduce importance if opponent has no queen
+
+        black_king_square = chess.SquareSet(bitboards.BLACK_KINGS).pop()
+        black_king_file = black_king_square % 8
+
+        if black_king_file <= 2 or black_king_file >= 5:
+            shield_squares = get_king_pawn_shield_square_set(black_king_square, chess.BLACK)
+            black_penalty = 0
+
+            for i, square in enumerate(shield_squares[:3]):  # First rank of shield
+                if not (bitboards.BLACK_PAWNS & (1 << square)):
+                    # Check if there's a pawn in the second rank of shield
+                    if len(shield_squares) > 3 and i + 3 < len(shield_squares) and (
+                            bitboards.BLACK_PAWNS & (1 << shield_squares[i + 3])):
+                        black_penalty += KING_PAWN_SHIELD_SCORES[i + 3]
+                    else:
+                        black_penalty += KING_PAWN_SHIELD_SCORES[i]
+
+            black_penalty *= black_penalty  # Square the penalty
+            score += int(black_penalty * pawn_shield_weight)
+        else:
+            # Uncastled black king penalty - only in opening/middlegame
+            enemy_development = 0
+            for piece_type in [chess.KNIGHT, chess.BISHOP]:
+                bb = getattr(bitboards, f"WHITE_{chess.piece_name(piece_type).upper()}S", 0)
+                # Count developed minor pieces
+                for square in chess.SquareSet(bb):
+                    if square // 8 != 7:  # Not on last rank
+                        enemy_development += 1
+
+            enemy_development_score = min(1.0, enemy_development / 4.0)
+            uncastled_penalty = int(50 * enemy_development_score)
+            score += uncastled_penalty * pawn_shield_weight
+        black_king_file = black_king_square % 8
+        if numWRooks > 1 or (numWRooks > 0 and numWQueens > 0):
             black_penalty = evaluate_open_files_against_king(black_king_file, bitboards.BLACK_PAWNS,
                                                              bitboards.WHITE_PAWNS,
                                                              bitboards.WHITE_ROOKS.bit_count(),
                                                              bitboards.WHITE_QUEENS.bit_count())
-            score += black_penalty * phase_weight
+            score += black_penalty * pawn_shield_weight
+
+
 
     return score
+
 
 def evaluate_open_files_against_king(king_file, friendly_pawns, enemy_pawns, enemy_rook_count, enemy_queen_count):
     """Evaluate penalty for open files near the king."""
@@ -452,11 +801,14 @@ def calculate_heuristic_score():
     # TODO: Add other heuristic components (pawn structure, king safety etc.)
     isolated_pawn_and_passed_pawn = calculate_passed_pawn_and_isolation_score()
     king_pawn_shield_score = calculate_king_pawn_shield_score()
+
+    pawn_structure_score = calculate_pawn_structure_score()
     # rook_score = calculate_rook_evaluation()
     # Combine scores (simple addition for now, consider tapering later)
     final_score = (material_score + pst_score + mobility_score
                    + isolated_pawn_and_passed_pawn
-                   + king_pawn_shield_score)
+                   + king_pawn_shield_score + pawn_structure_score)
+
     # Tapered Evaluation Logic (Keep commented out for now)
     # mg_score = material_score + pst_score + mobility_score # Add PST/Mobility to MG
     # eg_score = material_score + pst_score # Maybe less mobility in EG? Or king activity instead?
