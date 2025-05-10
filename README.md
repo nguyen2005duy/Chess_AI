@@ -5,8 +5,8 @@
 
 ## Đóng góp
 
-### Vũ Huy Công: Làm Bot (basic eval)
-### Nguyễn Đức Dũng : Làm bot, UI
-### Nguyẽn Đức Duy : Làm bot (NN)
+### Vũ Huy Công: Làm Bot (basic eval + advanced eval)
+### Nguyễn Đức Dũng : Làm bot (advanced eval), UI
+### Nguyẽn Đức Duy : Làm bot (NN) (Test, Training), UI Frame
 ### Nguyễn Đức Hưng : Làm bot, UI
  
