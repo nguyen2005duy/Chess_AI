@@ -89,22 +89,3 @@ def get_king_square(side: chess.Color) -> chess.Square | None:
         return None # King not found on the board
     # Assuming there's exactly one king, find its square index
     return chess.lsb(king_bb)
-# Example Usage (for testing)
-if __name__ == "__main__":
-    board = chess.Board()
-    initialize_bitboards(board)
-
-    print("Initial Board:")
-    print(board)
-
-    print("\nWhite Pawns Bitboard:")
-    print_bitboard(WHITE_PAWNS)
-
-    print("\nAll Pieces Bitboard:")
-    print_bitboard(ALL_PIECES)
-
-    print(f"\nSide to Move: {'White' if SIDE_TO_MOVE else 'Black'}")
-    print(f"Castling Rights: {CASTLING_RIGHTS}")
-    print(f"En Passant Square: {EN_PASSANT_SQUARE}")
-    print(f"Half Move Counter: {HALF_MOVE_COUNTER}")
-    print(f"Full Move Counter: {FULL_MOVE_COUNTER}")

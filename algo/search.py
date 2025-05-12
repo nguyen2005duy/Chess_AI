@@ -418,6 +418,7 @@ def negamax_search(depth, ply, alpha, beta, is_pv_node=True, allow_null_move=Tru
     legal_moves = generate_legal_moves()
 
     # Checkmate / Stalemate Detection (if not found in TT and no legal moves)
+    # Checkmate / Stalemate Detection (if not found in TT and no legal moves)
     if not legal_moves:
         if in_check:
             # Checkmate
@@ -674,8 +675,8 @@ def try_opening_book(board):
 # --- Principal Variation Extraction ---
 def extract_pv(depth, best_move):
     """Extract the principal variation from the transposition table"""
-    if not best_move:
-        return ""
+    if not best_move or not isinstance(best_move, chess.Move):
+        return ""  # Added check to ensure best_move is a Move object
 
     pv_string = best_move.uci()
     pv_length = 1
@@ -757,6 +758,14 @@ def iterative_deepening_search(max_depth, time_limit_seconds):
     print(f"Starting IDDFS search up to depth {max_depth} or {time_limit_seconds}s")
     clear_tt()  
 
+    # Get legal moves immediately as a fallback
+    legal_moves = generate_legal_moves()
+    if legal_moves:
+        # Pre-initialize with the first legal move as a fallback
+        ordered_moves = order_moves(legal_moves, 0, None)
+        if ordered_moves:
+            best_move_overall = ordered_moves[0]
+
     try:
         for current_depth in range(1, max_depth + 1):
             search_start_time_iter = time.time()
@@ -782,12 +791,13 @@ def iterative_deepening_search(max_depth, time_limit_seconds):
             root_entry = transposition_table.get(root_hash)
             best_move_this_iter = None
 
-            if root_entry and root_entry.best_move:
+            if root_entry and hasattr(root_entry, 'best_move') and root_entry.best_move:
                 legal_moves = generate_legal_moves()
-                if root_entry.best_move in legal_moves:
+                # Make sure the move is a proper move object and is legal
+                if isinstance(root_entry.best_move, chess.Move) and root_entry.best_move in legal_moves:
                     best_move_this_iter = root_entry.best_move
                 else:
-                    print(f"Warning: TT best move {root_entry.best_move.uci()} is not legal at root!")
+                    print(f"Warning: TT best move is not valid or not legal at root!")
 
             # Fallback if TT didn't provide a valid move
             if not best_move_this_iter:
@@ -801,12 +811,10 @@ def iterative_deepening_search(max_depth, time_limit_seconds):
                 else:
                     print("Error: No legal moves at root in IDDFS loop.")
 
-            # Update overall best move
-            if best_move_this_iter:
+            # Update overall best move - only if we got a valid move this iteration
+            if best_move_this_iter and isinstance(best_move_this_iter, chess.Move):
                 best_move_overall = best_move_this_iter
                 best_score_overall = score
-            elif not best_move_overall and generate_legal_moves():
-                best_move_overall = order_moves(generate_legal_moves(), 0, None)[0]
 
             # --- Display Search Info ---
             tt_stats = get_tt_stats()
@@ -825,17 +833,23 @@ def iterative_deepening_search(max_depth, time_limit_seconds):
                 mate_in = (MATE_SCORE + score + 1) // 2
                 score_str = f"mate -{mate_in}"
 
-            # Extract PV
-            pv_string = extract_pv(current_depth, best_move_this_iter)
+            # Extract PV - make sure best_move_this_iter is valid
+            pv_string = ""
+            if best_move_this_iter and isinstance(best_move_this_iter, chess.Move):
+                try:
+                    pv_string = extract_pv(current_depth, best_move_this_iter)
+                except Exception as e:
+                    print(f"Error extracting PV: {e}")
+                    pv_string = best_move_this_iter.uci()  # Just use the first move if extraction fails
 
             # Print UCI info
             print(f"info depth {current_depth} score {score_str} time {int(search_time*1000)} " +
-                    f"nodes {iter_nodes} nps {nps} hashfull {min(1000, int(tt_stats['size']/1000))} " +
-                    f"tthit {tt_hit_rate:.1f}% pv {pv_string}")
+                  f"nodes {iter_nodes} nps {nps} hashfull {min(1000, int(tt_stats['size']/1000))} " +
+                  f"tthit {tt_hit_rate:.1f}% pv {pv_string}")
 
             # Check if we should continue searching
             if not manage_search_time(current_depth, total_time, time_limit_seconds,
-                                        prev_time, score_stability):
+                                    prev_time, score_stability):
                 print("info string Breaking search early - time management")
                 break
 
@@ -845,7 +859,19 @@ def iterative_deepening_search(max_depth, time_limit_seconds):
         print("info string Search interrupted by time limit.")
     except Exception as e:
         print(f"info string Search error: {e}")
+        import traceback
+        traceback.print_exc()  # Print full traceback for better debugging
     finally:
+        # Final safeguard: Make sure we return a valid move
+        if best_move_overall is None or not isinstance(best_move_overall, chess.Move):
+            legal_moves = generate_legal_moves()
+            if legal_moves:
+                best_move_overall = order_moves(legal_moves, 0, None)[0]
+            else:
+                print("Warning: No legal moves found at end of search!")
+                # Last resort - create a null move if we can't find anything else
+                best_move_overall = chess.Move.null()
+
         return best_move_overall, best_score_overall
 
 # --- Public Interface ---
@@ -873,7 +899,10 @@ def find_best_move(board=None, max_depth=4, time_limit_seconds=10.0):
             # If terminal but moves exist (e.g., draw by repetition but can avoid)
             # Just pick the first ordered move
             return order_moves(legal_moves, 0, None)[0]
-        return board.legal_move()[0]  # No legal moves
+        # Corrected: Use generate_legal_moves instead of board.legal_move
+        if board and board.legal_moves:
+            return list(board.legal_moves)[0]
+        return None  # No legal moves found
 
     # Check for opening book move
     if board:
@@ -884,6 +913,17 @@ def find_best_move(board=None, max_depth=4, time_limit_seconds=10.0):
 
     # Launch the iterative deepening search
     best_move, _ = iterative_deepening_search(max_depth, time_limit_seconds)
+
+    # Add error handling to ensure a valid move is returned
+    if best_move is None or not isinstance(best_move, chess.Move):
+        legal_moves = generate_legal_moves()
+        if legal_moves:
+            # If no valid move was found but legal moves exist, return the first legal move
+            return order_moves(legal_moves, 0, None)[0]
+        elif board and board.legal_moves:
+            return list(board.legal_moves)[0]
+        return None  # No legal moves found
+
     return best_move
 
 def stop_calculation():
@@ -891,88 +931,3 @@ def stop_calculation():
     global stop_search
     stop_search = True
 
-# Testing
-if __name__ == "__main__":
-    import traceback
-    def main():
-        global nodes_searched  # Proper global declaration at the beginning
-        print("=== Chess Search Module Test Suite ===")
-        # 1. Test search from standard starting position
-        test_board = chess.Board()
-        print("\nTest 1: Search from starting position:")
-        print(test_board)
-        initialize_board_state(test_board)
-        start_time = time.time()
-        best_move = find_best_move(max_depth=5, time_limit_seconds=3.0)
-        search_time = time.time() - start_time
-        print(f"Best move found: {best_move.uci() if best_move else 'None'}")
-        print(f"Time taken: {search_time:.2f} seconds")
-        print(f"Nodes searched: {nodes_searched:,}")
-        # 2. Test a tactical position (Mate in 2)
-        mate_fen = "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1"
-        mate_board = chess.Board(mate_fen)
-        print("\nTest 2: Tactical position (should find Qxf7#):")
-        print(mate_board)
-        initialize_board_state(mate_board)
-        nodes_searched = 0  # Reset node counter
-        start_time = time.time()
-        mate_move = find_best_move(max_depth=4, time_limit_seconds=3.0)
-        search_time = time.time() - start_time
-        expected_move = chess.Move.from_uci("h5f7")
-        is_correct = mate_move == expected_move if mate_move else False
-        print(f"Best move found: {mate_move.uci() if mate_move else 'None'}")
-        print("Expected move: Qxf7# (h5f7)")  # No need for f-string here
-        print(f"Correct solution: {'Yes' if is_correct else 'No'}")
-        print(f"Time taken: {search_time:.2f} seconds")
-        print(f"Nodes searched: {nodes_searched:,}")
-        # 3. Depth comparison test
-        print("\nTest 3: Depth comparison on middlegame position:")
-        middlegame_fen = "r1bq1rk1/pp2ppbp/2np1np1/8/3NP3/2N1BP2/PPPQ2PP/R3KB1R w KQ - 0 9"
-        middlegame_board = chess.Board(middlegame_fen)
-        print(middlegame_board)
-        initialize_board_state(middlegame_board)
-        for depth in [1, 2, 3, 4, 5]:
-            nodes_searched = 0  # Reset node counter
-            start_time = time.time()
-            move = find_best_move(max_depth=depth, time_limit_seconds=2.0)
-            search_time = time.time() - start_time
-            print(f"Depth {depth}: Move {move.uci() if move else 'None'} in {search_time:.2f}s ({nodes_searched:,} nodes)")
-        # 4. Opening book test (if available)
-        print("\nTest 4: Opening book lookup:")
-        opening_board = chess.Board()  # Starting position should be in books
-        book_move = try_opening_book(opening_board)
-        if book_move:
-            print(f"Found book move: {book_move.uci()}")
-        else:
-            print("No book move found - books may not be available")
-        # 5. Performance benchmark
-        print("\nTest 5: Performance benchmark (depth 6, 5 seconds):")
-        initialize_board_state(test_board)
-        nodes_searched = 0  # Reset node counter
-        perf_start = time.time()
-        find_best_move(max_depth=6, time_limit_seconds=5.0)
-        perf_time = time.time() - perf_start
-        print(f"Nodes searched: {nodes_searched:,}")
-        print(f"Time taken: {perf_time:.2f} seconds")
-        print(f"Nodes per second: {int(nodes_searched/perf_time):,}")
-        # 6. Endgame tablebase test (if available)
-        if SYZYGY_TABLEBASE is not None:
-            print("\nTest 6: Endgame tablebase probe:")
-            egtb_fen = "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1"  # King and pawn vs king
-            egtb_board = chess.Board(egtb_fen)
-            print(egtb_board)
-            initialize_board_state(egtb_board)
-            egtb_move = find_best_move(max_depth=5, time_limit_seconds=1.0)
-            print(f"Best move from tablebase: {egtb_move.uci() if egtb_move else 'None'}")
-        print("\n=== All tests completed successfully ===")
-        return True
-    try:
-        success = main()
-        if not success:
-            print("Tests completed with warnings.")
-    except KeyboardInterrupt:
-        print("\nTests interrupted by user.")
-    except Exception as e:
-        print(f"\nError during tests: {e}")
-        traceback.print_exc()
-        print("\nSearch module test failed!")

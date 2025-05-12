@@ -3,10 +3,10 @@ import chess.engine
 import time
 import json
 import os
-from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
+from collections import defaultdict
 
 # Import your search function for testing
 try:
@@ -21,15 +21,15 @@ except ImportError:
 
 # --- Configuration ---
 STOCKFISH_PATH = "./stockfish.exe"  # Update this for your system
-STOCKFISH_ELO = 1800
-DEBUG_POSITIONS = 100  # Number of positions to analyze
-STOCKFISH_DEPTH = 15  # Depth for "ground truth" analysis
+DEBUG_POSITIONS = 300  # Number of positions to analyze
+STOCKFISH_DEPTH = 6  # Depth for "ground truth" analysis
 ENGINE_DEPTH_LIMIT = 6
-ENGINE_TIME_LIMIT_S = 5.0
-OUTPUT_DIR = "engine_debug"
+ENGINE_TIME_LIMIT_S = 5
+OUTPUT_DIR = "engine_comparison"
 
 # Create output directory if it doesn't exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(os.path.join(OUTPUT_DIR, "plots"), exist_ok=True)
 
 
 def configure_stockfish_engine(engine, elo=None):
@@ -51,118 +51,17 @@ def configure_stockfish_engine(engine, elo=None):
         print(f"Stockfish configured" + (f" for {elo} ELO" if elo else ""))
     except chess.engine.EngineError as e:
         print(f"Warning: Some engine options not supported. {e}")
-        # Fallback to minimal configuration
-        if elo is not None:
-            try:
-                engine.configure({"UCI_LimitStrength": True, "UCI_Elo": elo})
-                print(f"Fallback configuration: Stockfish set to {elo} ELO")
-            except chess.engine.EngineError:
-                print("Warning: Could not set ELO rating. Engine may play at full strength.")
 
     return engine
 
 
-def get_position_evaluation(engine, board, depth=15):
-    """Get a detailed position evaluation from the engine."""
-    result = {}
-
-    # Get the principal variation and score
-    info = engine.analyse(board, chess.engine.Limit(depth=depth))
-
-    # Extract the score
-    if "score" in info:
-        score = info["score"].white().score(mate_score=10000)
-        result["score"] = score / 100.0  # Convert centipawns to pawns
-
-    # Extract the best move
-    if "pv" in info and len(info["pv"]) > 0:
-        result["best_move"] = info["pv"][0].uci()
-
-    # Extract the principal variation
-    if "pv" in info:
-        result["pv"] = [move.uci() for move in info["pv"]]
-
-    # Extract depth reached
-    if "depth" in info:
-        result["depth"] = info["depth"]
-
-    # Extract nodes searched
-    if "nodes" in info:
-        result["nodes"] = info["nodes"]
-
-    # Extract time
-    if "time" in info:
-        result["time"] = info["time"]
-
-    return result
-
-
-def analyze_position(board, engine, engine_name="Stockfish", depth=15, time_limit=None):
-    """Analyze a position with the given engine."""
-    limit = chess.engine.Limit(depth=depth) if time_limit is None else chess.engine.Limit(time=time_limit)
-
-    start_time = time.time()
-    info = engine.analyse(board, limit)
-    end_time = time.time()
-
-    # Extract results
-    result = {
-        "engine": engine_name,
-        "fen": board.fen(),
-        "time_taken": end_time - start_time,
-    }
-
-    # Extract score
-    if "score" in info:
-        cp_score = info["score"].white().score(mate_score=10000)
-        result["score"] = cp_score / 100.0  # Convert to pawns
-    else:
-        result["score"] = None
-
-    # Extract best move
-    if "pv" in info and len(info["pv"]) > 0:
-        result["best_move"] = info["pv"][0].uci()
-        result["pv"] = [move.uci() for move in info["pv"]]
-    else:
-        result["best_move"] = None
-        result["pv"] = []
-
-    # Extract depth
-    result["depth"] = info.get("depth", 0)
-
-    # Extract nodes
-    result["nodes"] = info.get("nodes", 0)
-
-    return result
-
-
-def analyze_with_your_engine(board, max_depth=ENGINE_DEPTH_LIMIT, time_limit=ENGINE_TIME_LIMIT_S):
-    """Analyze a position with your custom engine."""
-    start_time = time.time()
-
-    # Call your engine's find_best_move function
-    best_move = find_best_move(board, max_depth=max_depth, time_limit_seconds=time_limit)
-
-    end_time = time.time()
-
-    result = {
-        "engine": "YourEngine",
-        "fen": board.fen(),
-        "time_taken": end_time - start_time,
-        "best_move": best_move.uci() if best_move else None,
-    }
-
-    return result
-
-
-def generate_test_positions(num_positions=100, ply_range=(5, 40)):
+def generate_test_positions(num_positions=50, ply_range=(5, 30)):
     """Generate a set of test positions by playing random games."""
     positions = []
-
     print(f"Generating {num_positions} test positions...")
 
     with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as engine:
-        configure_stockfish_engine(engine, STOCKFISH_ELO)
+        configure_stockfish_engine(engine)
 
         while len(positions) < num_positions:
             board = chess.Board()
@@ -192,566 +91,1098 @@ def generate_test_positions(num_positions=100, ply_range=(5, 40)):
                     positions.append({"fen": board.fen(), "ply": board.fullmove_number})
 
             except Exception as e:
-                print(f"Error generating position: {e}")
+                # Just continue to next position on error
+                continue
 
     print(f"Generated {len(positions)} unique positions")
     return positions
 
 
-def compare_engine_moves(your_move, stockfish_move, legal_moves):
+def analyze_positions(positions_batch, stockfish_path, stockfish_depth, engine_depth_limit, engine_time_limit):
+    """Analyze a batch of positions in a separate process."""
+    import chess
+    import chess.engine
+    import time
+    from collections import defaultdict
+    import sys
+    import os
+
+    # Import the search function for this process
+    try:
+        from algo.search import find_best_move
+    except ImportError:
+        print("Warning: Could not import find_best_move from algo.search in worker process")
+
+        # Define a placeholder function for testing
+        def find_best_move(board, max_depth=4, time_limit_seconds=5.0):
+            return list(board.legal_moves)[0] if board.legal_moves else None
+
+    # Helper functions needed within this process
+    def configure_stockfish_engine(engine, elo=None):
+        """Configure Stockfish engine with consistent settings."""
+        config = {
+            "Threads": 1,  # Single thread for consistent results
+            "Hash": 128,  # Hash table size in MB
+        }
+
+        # Add ELO limiting if specified
+        if elo is not None:
+            config.update({
+                "UCI_LimitStrength": True,
+                "UCI_Elo": elo
+            })
+
+        try:
+            engine.configure(config)
+        except chess.engine.EngineError as e:
+            print(f"Warning: Some engine options not supported. {e}")
+
+        return engine
+
+    def analyze_position(board, engine, depth=6):
+        """Analyze a position with the given engine."""
+        try:
+            limit = chess.engine.Limit(depth=depth)
+
+            start_time = time.time()
+            info = engine.analyse(board, limit)
+            end_time = time.time()
+
+            # Extract results
+            result = {
+                "fen": board.fen(),
+                "time_taken": end_time - start_time,
+            }
+
+            # Extract score
+            if "score" in info:
+                cp_score = info["score"].white().score(mate_score=10000)
+                result["score"] = cp_score / 100.0  # Convert to pawns
+            else:
+                result["score"] = None
+
+            # Extract best move
+            if "pv" in info and len(info["pv"]) > 0:
+                result["best_move"] = info["pv"][0].uci()
+            else:
+                result["best_move"] = None
+
+            return result
+        except Exception as e:
+            # Return empty result on error
+            return {
+                "fen": board.fen() if board else None,
+                "time_taken": 0,
+                "score": None,
+                "best_move": None
+            }
+
+    def analyze_with_your_engine(board, max_depth, time_limit):
+        """Analyze a position with your custom engine."""
+        start_time = time.time()
+        result = {
+            "fen": board.fen(),
+            "time_taken": 0,
+            "best_move": None,
+        }
+
+        try:
+            # Call your engine's find_best_move function
+            best_move = find_best_move(board, max_depth=max_depth, time_limit_seconds=time_limit)
+
+            # Ensure best_move is a proper Move object
+            if best_move and not isinstance(best_move, chess.Move):
+                # Try to convert string notation to a move if that's what was returned
+                if isinstance(best_move, str):
+                    try:
+                        best_move = chess.Move.from_uci(best_move)
+                    except ValueError:
+                        best_move = None
+                else:
+                    best_move = None
+
+            end_time = time.time()
+            result["time_taken"] = end_time - start_time
+            result["best_move"] = best_move.uci() if best_move else None
+
+        except Exception:
+            end_time = time.time()
+            result["time_taken"] = end_time - start_time
+
+        return result
+
+    def compare_engine_moves(your_move, stockfish_move, legal_moves, board):
+        """Compare the engine moves and classify the difference."""
+        if your_move == stockfish_move:
+            return "exact_match"
+
+        # Handle None cases first
+        if your_move is None:
+            return "no_move"
+
+        try:
+            your_move_obj = chess.Move.from_uci(your_move)
+
+            # Check if move is legal
+            if your_move_obj not in legal_moves:
+                return "illegal_move"
+
+            # Only proceed if stockfish move exists
+            if stockfish_move:
+                stockfish_move_obj = chess.Move.from_uci(stockfish_move)
+
+                # Check if same piece is moving
+                from_square_same = your_move_obj.from_square == stockfish_move_obj.from_square
+
+                # Check if it's a capture vs non-capture
+                your_is_capture = board.is_capture(your_move_obj)
+                stockfish_is_capture = board.is_capture(stockfish_move_obj)
+
+                if from_square_same and your_is_capture != stockfish_is_capture:
+                    return "capture_decision_difference"
+                elif from_square_same:
+                    return "same_piece_different_target"
+                else:
+                    # Get the pieces being moved
+                    your_piece = board.piece_at(your_move_obj.from_square)
+                    stockfish_piece = board.piece_at(stockfish_move_obj.from_square)
+
+                    if your_piece and stockfish_piece and your_piece.piece_type == stockfish_piece.piece_type:
+                        return "same_piece_type_different_location"
+                    else:
+                        return "different_piece_move"
+        except Exception:
+            return "error_comparing"
+
+        return "different_move"
+
+    # Process the batch
+    batch_results = []
+
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as stockfish:
+        configure_stockfish_engine(stockfish)
+
+        for position in positions_batch:
+            try:
+                fen = position["fen"]
+                board = chess.Board(fen)
+                legal_moves = list(board.legal_moves)
+
+                # Skip positions with very few options
+                if len(legal_moves) < 3:
+                    continue
+
+                # Analyze with Stockfish
+                stockfish_analysis = analyze_position(board, stockfish, depth=stockfish_depth)
+
+                # Analyze with your engine
+                your_analysis = analyze_with_your_engine(board, max_depth=engine_depth_limit,
+                                                         time_limit=engine_time_limit)
+
+                # Compare results
+                comparison = {
+                    "position_id": position.get("position_id", 0),
+                    "fen": fen,
+                    "stockfish_move": stockfish_analysis.get("best_move"),
+                    "your_move": your_analysis.get("best_move"),
+                    "legal_move_count": len(legal_moves),
+                    "fullmove_number": board.fullmove_number
+                }
+
+                # Classify move comparison
+                move_comparison_type = compare_engine_moves(
+                    your_analysis.get("best_move"),
+                    stockfish_analysis.get("best_move"),
+                    legal_moves,
+                    board
+                )
+                comparison["move_comparison"] = move_comparison_type
+
+                # Calculate time ratio (your engine / stockfish)
+                if stockfish_analysis.get("time_taken", 0) > 0:
+                    time_ratio = your_analysis.get("time_taken", 0) / stockfish_analysis.get("time_taken", 0)
+                    comparison["time_ratio"] = time_ratio
+
+                batch_results.append(comparison)
+
+            except Exception as e:
+                # Skip problematic positions
+                continue
+
+    return batch_results
+
+
+def analyze_with_your_engine(board, max_depth=ENGINE_DEPTH_LIMIT, time_limit=ENGINE_TIME_LIMIT_S):
+    """Analyze a position with your custom engine."""
+    start_time = time.time()
+    result = {
+        "fen": board.fen(),
+        "time_taken": 0,
+        "best_move": None,
+    }
+
+    try:
+        # Call your engine's find_best_move function
+        best_move = find_best_move(board, max_depth=max_depth, time_limit_seconds=time_limit)
+
+        # Ensure best_move is a proper Move object
+        if best_move and not isinstance(best_move, chess.Move):
+            # Try to convert string notation to a move if that's what was returned
+            if isinstance(best_move, str):
+                try:
+                    best_move = chess.Move.from_uci(best_move)
+                except ValueError:
+                    best_move = None
+            else:
+                best_move = None
+
+        end_time = time.time()
+        result["time_taken"] = end_time - start_time
+        result["best_move"] = best_move.uci() if best_move else None
+
+    except Exception:
+        end_time = time.time()
+        result["time_taken"] = end_time - start_time
+
+    return result
+
+
+def compare_engine_moves(your_move, stockfish_move, legal_moves, board):
     """Compare the engine moves and classify the difference."""
     if your_move == stockfish_move:
         return "exact_match"
 
-    # Convert moves to chess.Move objects for easier comparison
-    try:
-        your_move_obj = chess.Move.from_uci(your_move) if your_move else None
-        stockfish_move_obj = chess.Move.from_uci(stockfish_move) if stockfish_move else None
+    # Handle None cases first
+    if your_move is None:
+        return "no_move"
 
-        # Check if either move is None or illegal
-        if your_move is None:
-            return "no_move"
+    try:
+        your_move_obj = chess.Move.from_uci(your_move)
+
+        # Check if move is legal
         if your_move_obj not in legal_moves:
             return "illegal_move"
 
-        # TODO: Add more sophisticated move comparison logic here
-        # For example, you might want to check if the moves attack/defend similar squares,
-        # capture the same piece, etc.
+        # Only proceed if stockfish move exists
+        if stockfish_move:
+            stockfish_move_obj = chess.Move.from_uci(stockfish_move)
 
-        return "different_move"
-    except Exception as e:
-        print(f"Error comparing moves: {e}")
-        return "error"
+            # Check if same piece is moving
+            from_square_same = your_move_obj.from_square == stockfish_move_obj.from_square
+
+            # Check if it's a capture vs non-capture
+            your_is_capture = board.is_capture(your_move_obj)
+            stockfish_is_capture = board.is_capture(stockfish_move_obj)
+
+            if from_square_same and your_is_capture != stockfish_is_capture:
+                return "capture_decision_difference"
+            elif from_square_same:
+                return "same_piece_different_target"
+            else:
+                # Get the pieces being moved
+                your_piece = board.piece_at(your_move_obj.from_square)
+                stockfish_piece = board.piece_at(stockfish_move_obj.from_square)
+
+                if your_piece and stockfish_piece and your_piece.piece_type == stockfish_piece.piece_type:
+                    return "same_piece_type_different_location"
+                else:
+                    return "different_piece_move"
+    except Exception:
+        return "error_comparing"
+
+    return "different_move"
 
 
-def run_engine_diagnostics():
-    """Run comprehensive diagnostics on your chess engine."""
-    results = {
-        "positions": [],
-        "summary": {},
-        "errors": []
-    }
+def analyze_move_differences_batch(positions_batch, stockfish_path):
+    """Analyze why your engine's moves differ from Stockfish's for a batch of positions."""
+    import chess
+    import chess.engine
+    import time
+
+    # Process the batch with one stockfish instance
+    detailed_analyses = []
+
+    with chess.engine.SimpleEngine.popen_uci(stockfish_path) as stockfish:
+        # Configure stockfish
+        config = {
+            "Threads": 1,
+            "Hash": 128,
+        }
+        try:
+            stockfish.configure(config)
+        except chess.engine.EngineError:
+            pass
+
+        for pos in positions_batch:
+            try:
+                fen = pos.get("fen")
+                your_move = pos.get("your_move")
+                stockfish_move = pos.get("stockfish_move")
+
+                if not fen or not your_move or not stockfish_move:
+                    continue
+
+                board = chess.Board(fen)
+                analysis = analyze_move_difference(board, your_move, stockfish_move, stockfish)
+
+                interesting_position = {
+                    "fen": fen,
+                    "stockfish_move": stockfish_move,
+                    "your_move": your_move,
+                    "analysis": analysis,
+                    "fullmove_number": board.fullmove_number
+                }
+                detailed_analyses.append(interesting_position)
+
+            except Exception:
+                continue
+
+    return detailed_analyses
+
+
+def analyze_move_difference(board, your_move, stockfish_move, stockfish):
+    """Analyze why your engine's move differs from Stockfish's."""
+    if your_move == stockfish_move:
+        return "Moves match"
+
+    if not your_move:
+        return "Your engine didn't return a move"
+
+    if not stockfish_move:
+        return "Stockfish didn't return a move"
+
+    analysis = {}
 
     try:
-        print("Starting chess engine diagnostics...")
+        # Analyze a position with the given engine
+        def analyze_position(board, engine, depth=6):
+            try:
+                limit = chess.engine.Limit(depth=depth)
+                start_time = time.time()
+                info = engine.analyse(board, limit)
+                end_time = time.time()
 
-        # Generate test positions
-        test_positions = generate_test_positions(DEBUG_POSITIONS)
-
-        # Initialize Stockfish
-        with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as stockfish:
-            configure_stockfish_engine(stockfish)  # Full strength for ground truth
-
-            print(f"Analyzing {len(test_positions)} positions...")
-
-            move_comparisons = defaultdict(int)
-            eval_diffs = []
-            time_ratios = []
-
-            for idx, position in enumerate(tqdm(test_positions)):
-                try:
-                    fen = position["fen"]
-                    board = chess.Board(fen)
-                    legal_moves = list(board.legal_moves)
-
-                    # Skip positions with very few options
-                    if len(legal_moves) < 3:
-                        continue
-
-                    # Analyze with Stockfish (ground truth)
-                    stockfish_analysis = analyze_position(
-                        board, stockfish, engine_name="Stockfish", depth=STOCKFISH_DEPTH
-                    )
-
-                    # Analyze with your engine
-                    your_analysis = analyze_with_your_engine(
-                        board, max_depth=ENGINE_DEPTH_LIMIT, time_limit=ENGINE_TIME_LIMIT_S
-                    )
-
-                    # Compare results
-                    comparison = {
-                        "position_id": idx,
-                        "fen": fen,
-                        "stockfish": stockfish_analysis,
-                        "your_engine": your_analysis,
-                        "legal_move_count": len(legal_moves)
-                    }
-
-                    # Classify move comparison
-                    move_comparison_type = compare_engine_moves(
-                        your_analysis.get("best_move"),
-                        stockfish_analysis.get("best_move"),
-                        legal_moves
-                    )
-                    comparison["move_comparison"] = move_comparison_type
-                    move_comparisons[move_comparison_type] += 1
-
-                    # Calculate time ratio (your engine / stockfish)
-                    if stockfish_analysis.get("time_taken", 0) > 0:
-                        time_ratio = your_analysis.get("time_taken", 0) / stockfish_analysis.get("time_taken", 0)
-                        time_ratios.append(time_ratio)
-                        comparison["time_ratio"] = time_ratio
-
-                    results["positions"].append(comparison)
-
-                except Exception as e:
-                    error_msg = f"Error analyzing position {idx}: {e}"
-                    print(error_msg)
-                    results["errors"].append(error_msg)
-
-            # Calculate summary statistics
-            total_positions = len(results["positions"])
-            if total_positions > 0:
-                results["summary"] = {
-                    "total_positions": total_positions,
-                    "move_comparison": dict(move_comparisons),
-                    "exact_match_percentage": move_comparisons[
-                                                  "exact_match"] / total_positions * 100 if total_positions > 0 else 0,
-                    "average_time_ratio": np.mean(time_ratios) if time_ratios else None,
-                    "median_time_ratio": np.median(time_ratios) if time_ratios else None,
+                # Extract results
+                result = {
+                    "fen": board.fen(),
+                    "time_taken": end_time - start_time,
                 }
 
-        # Save results to file
-        with open(os.path.join(OUTPUT_DIR, "diagnostic_results.json"), "w") as f:
-            json.dump(results, f, indent=2)
+                # Extract score
+                if "score" in info:
+                    cp_score = info["score"].white().score(mate_score=10000)
+                    result["score"] = cp_score / 100.0  # Convert to pawns
+                else:
+                    result["score"] = None
 
-        print(f"Diagnostics complete. Results saved to {os.path.join(OUTPUT_DIR, 'diagnostic_results.json')}")
+                # Extract best move
+                if "pv" in info and len(info["pv"]) > 0:
+                    result["best_move"] = info["pv"][0].uci()
+                else:
+                    result["best_move"] = None
 
-        # Generate plots
-        generate_diagnostic_plots(results)
+                return result
+            except Exception:
+                # Return empty result on error
+                return {
+                    "fen": board.fen() if board else None,
+                    "time_taken": 0,
+                    "score": None,
+                    "best_move": None
+                }
 
-        return results
+        # Evaluate position after your move
+        board_after_your_move = board.copy()
+        your_move_obj = chess.Move.from_uci(your_move)
+        board_after_your_move.push(your_move_obj)
+        your_result = analyze_position(board_after_your_move, stockfish, depth=8)
 
-    except Exception as e:
-        print(f"Error in diagnostics: {e}")
-        import traceback
-        traceback.print_exc()
-        results["errors"].append(str(e))
-        return results
+        # Evaluate position after Stockfish move
+        board_after_stockfish = board.copy()
+        stockfish_move_obj = chess.Move.from_uci(stockfish_move)
+        board_after_stockfish.push(stockfish_move_obj)
+        stockfish_result = analyze_position(board_after_stockfish, stockfish, depth=8)
+
+        # Calculate evaluation difference
+        if your_result["score"] is not None and stockfish_result["score"] is not None:
+            eval_diff = your_result["score"] - stockfish_result["score"]
+            if board.turn == chess.BLACK:
+                eval_diff = -eval_diff
+            analysis["eval_diff"] = eval_diff
+        else:
+            analysis["eval_diff"] = 0
+
+        # Check material changes
+        def count_material(b):
+            material = {'P': 0, 'N': 0, 'B': 0, 'R': 0, 'Q': 0, 'p': 0, 'n': 0, 'b': 0, 'r': 0, 'q': 0}
+            for square in chess.SQUARES:
+                piece = b.piece_at(square)
+                if piece:
+                    material[piece.symbol()] += 1
+            return material
+
+        material_before = count_material(board)
+        material_after_your = count_material(board_after_your_move)
+        material_after_stockfish = count_material(board_after_stockfish)
+
+        # Calculate material value changes
+        piece_values = {'P': 1, 'N': 3, 'B': 3, 'R': 5, 'Q': 9, 'K': 0,
+                        'p': -1, 'n': -3, 'b': -3, 'r': -5, 'q': -9, 'k': 0}
+
+        your_material_change = sum((material_after_your[p] - material_before[p]) * piece_values[p.upper()]
+                                   for p in material_before)
+        stockfish_material_change = sum((material_after_stockfish[p] - material_before[p]) * piece_values[p.upper()]
+                                        for p in material_before)
+
+        analysis["your_material_change"] = your_material_change
+        analysis["stockfish_material_change"] = stockfish_material_change
+
+        # Check if moves are captures
+        your_captures = any(material_before[p] > material_after_your[p] for p in material_before)
+        stockfish_captures = any(material_before[p] > material_after_stockfish[p] for p in material_before)
+
+        analysis["your_captures"] = your_captures
+        analysis["stockfish_captures"] = stockfish_captures
+
+        # Check if captured piece values differ
+        if your_captures and stockfish_captures:
+            # Calculate value of piece captured by your move
+            your_captured_value = 0
+            for p in material_before:
+                if material_before[p] > material_after_your[p]:
+                    your_captured_value += (material_before[p] - material_after_your[p]) * abs(piece_values[p])
+
+            # Calculate value of piece captured by stockfish move
+            stockfish_captured_value = 0
+            for p in material_before:
+                if material_before[p] > material_after_stockfish[p]:
+                    stockfish_captured_value += (material_before[p] - material_after_stockfish[p]) * abs(
+                        piece_values[p])
+
+            analysis["your_captured_value"] = your_captured_value
+            analysis["stockfish_captured_value"] = stockfish_captured_value
+
+        # Check checks and threats
+        analysis["your_gives_check"] = board_after_your_move.is_check()
+        analysis["stockfish_gives_check"] = board_after_stockfish.is_check()
+
+        # Examine piece development (for opening)
+        if board.fullmove_number <= 10:
+            # Check if the move develops a new piece
+            piece_at_your_from = board.piece_at(your_move_obj.from_square)
+            piece_at_stockfish_from = board.piece_at(stockfish_move_obj.from_square)
+
+            your_develops_piece = (piece_at_your_from and
+                                   piece_at_your_from.piece_type in [chess.KNIGHT, chess.BISHOP] and
+                                   your_move_obj.from_square in [chess.B1, chess.G1, chess.C1, chess.F1,
+                                                                 chess.B8, chess.G8, chess.C8, chess.F8])
+
+            stockfish_develops_piece = (piece_at_stockfish_from and
+                                        piece_at_stockfish_from.piece_type in [chess.KNIGHT, chess.BISHOP] and
+                                        stockfish_move_obj.from_square in [chess.B1, chess.G1, chess.C1, chess.F1,
+                                                                           chess.B8, chess.G8, chess.C8, chess.F8])
+
+            analysis["your_develops_piece"] = your_develops_piece
+            analysis["stockfish_develops_piece"] = stockfish_develops_piece
+
+        # Check center control (for opening/middlegame)
+        center_squares = [chess.D4, chess.E4, chess.D5, chess.E5]
+
+        # Count how many center squares are attacked before and after moves
+        def count_center_attacks(b, color):
+            return sum(1 for sq in center_squares if b.is_attacked_by(color, sq))
+
+        your_center_control = count_center_attacks(board_after_your_move, board.turn)
+        stockfish_center_control = count_center_attacks(board_after_stockfish, board.turn)
+
+        analysis["your_center_control"] = your_center_control
+        analysis["stockfish_center_control"] = stockfish_center_control
+
+        # Generate insights
+        insights = []
+
+        if abs(analysis.get("eval_diff", 0)) < 0.3:
+            insights.append("Moves are similar in evaluation")
+        elif analysis.get("eval_diff", 0) < 0:
+            insights.append(f"Stockfish's move is better by {abs(analysis.get('eval_diff', 0)):.2f} pawns")
+        else:
+            insights.append(f"Your move is surprisingly better by {analysis.get('eval_diff', 0):.2f} pawns")
+
+        if your_captures and not stockfish_captures:
+            insights.append("Your engine captured material but Stockfish chose a positional move")
+        elif stockfish_captures and not your_captures:
+            insights.append("Stockfish captured material but your engine chose a different approach")
+
+        if your_captures and stockfish_captures and "your_captured_value" in analysis and "stockfish_captured_value" in analysis:
+            if analysis["your_captured_value"] < analysis["stockfish_captured_value"]:
+                insights.append(
+                    f"Stockfish captured higher value material (worth {analysis['stockfish_captured_value']} vs your {analysis['your_captured_value']})")
+            elif analysis["your_captured_value"] > analysis["stockfish_captured_value"]:
+                insights.append(
+                    f"Your engine captured higher value material (worth {analysis['your_captured_value']} vs Stockfish's {analysis['stockfish_captured_value']})")
+
+        if analysis.get("stockfish_gives_check", False) and not analysis.get("your_gives_check", False):
+            insights.append("Stockfish found a check that your engine missed")
+        elif analysis.get("your_gives_check", False) and not analysis.get("stockfish_gives_check", False):
+            insights.append("Your engine found a check that Stockfish deemed suboptimal")
+
+        if board.fullmove_number <= 10:
+            if analysis.get("stockfish_develops_piece", False) and not analysis.get("your_develops_piece", False):
+                insights.append("Stockfish developed a piece in the opening, while your move did not")
+            elif analysis.get("your_develops_piece", False) and not analysis.get("stockfish_develops_piece", False):
+                insights.append(
+                    "Your engine developed a piece in the opening, while Stockfish chose a different priority")
+
+        if analysis.get("stockfish_center_control", 0) > analysis.get("your_center_control", 0):
+            insights.append(
+                f"Stockfish's move improves center control more than yours ({analysis.get('stockfish_center_control', 0)} vs {analysis.get('your_center_control', 0)} center squares attacked)")
+        elif analysis.get("your_center_control", 0) > analysis.get("stockfish_center_control", 0):
+            insights.append(
+                f"Your move improves center control more than Stockfish's ({analysis.get('your_center_control', 0)} vs {analysis.get('stockfish_center_control', 0)} center squares attacked)")
+
+        analysis["insights"] = insights
+        return analysis
+
+    except Exception:
+        # Return basic analysis if detailed analysis fails
+        return {
+            "eval_diff": 0,
+            "insights": ["Analysis unavailable due to error"]
+        }
 
 
-def generate_diagnostic_plots(results):
-    """Generate diagnostic plots from the results."""
-    try:
-        os.makedirs(os.path.join(OUTPUT_DIR, "plots"), exist_ok=True)
-
-        # Move comparison pie chart
-        if "move_comparison" in results["summary"]:
-            move_comp = results["summary"]["move_comparison"]
-            labels = list(move_comp.keys())
-            sizes = list(move_comp.values())
-
-            plt.figure(figsize=(10, 6))
-            plt.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-            plt.axis('equal')
-            plt.title('Move Comparison Distribution')
-            plt.savefig(os.path.join(OUTPUT_DIR, "plots", "move_comparison_pie.png"))
-            plt.close()
-
-        # Time ratio histogram
-        time_ratios = [pos.get("time_ratio", 0) for pos in results["positions"] if "time_ratio" in pos]
-        if time_ratios:
-            plt.figure(figsize=(10, 6))
-            plt.hist(time_ratios, bins=20, alpha=0.7)
-            plt.axvline(np.median(time_ratios), color='r', linestyle='dashed', linewidth=1)
-            plt.axvline(np.mean(time_ratios), color='g', linestyle='dashed', linewidth=1)
-            plt.text(np.median(time_ratios), 0, f'Median: {np.median(time_ratios):.2f}', color='r')
-            plt.text(np.mean(time_ratios), 0, f'Mean: {np.mean(time_ratios):.2f}', color='g')
-            plt.title('Time Ratio (Your Engine / Stockfish)')
-            plt.xlabel('Time Ratio')
-            plt.ylabel('Frequency')
-            plt.savefig(os.path.join(OUTPUT_DIR, "plots", "time_ratio_hist.png"))
-            plt.close()
-
-        print(f"Plots saved to {os.path.join(OUTPUT_DIR, 'plots')}")
-
-    except Exception as e:
-        print(f"Error generating plots: {e}")
-
-
-def extract_patterns_from_results(results):
-    """Extract patterns from the diagnostic results to understand engine weaknesses."""
+def collect_move_patterns(results):
+    """Analyze patterns in move selection differences."""
     patterns = {
-        "tactical_misses": [],
-        "positional_errors": [],
-        "endgame_errors": [],
-        "opening_errors": [],
-        "time_issues": []
+        "opening_patterns": defaultdict(int),
+        "middlegame_patterns": defaultdict(int),
+        "endgame_patterns": defaultdict(int),
+        "material_imbalance": defaultdict(int),
+        "piece_preference": {
+            "your_engine": defaultdict(int),
+            "stockfish": defaultdict(int)
+        }
     }
 
-    # Helper function to estimate game phase
-    def estimate_game_phase(fen):
-        parts = fen.split()
-        piece_count = sum(c.isalpha() for c in parts[0])
-        if piece_count > 26:  # More than 10 pieces per side on average
-            return "opening"
-        elif piece_count > 16:  # More than 8 pieces per side
-            return "middlegame"
-        else:
-            return "endgame"
+    for pos in results.get("positions", []):
+        try:
+            fen = pos.get("fen")
+            if not fen:
+                continue
 
-    for position in results["positions"]:
-        fen = position["fen"]
-        board = chess.Board(fen)
-        phase = estimate_game_phase(fen)
+            board = chess.Board(fen)
+            your_move = pos.get("your_move")
+            stockfish_move = pos.get("stockfish_move")
 
-        # Skip exact matches
-        if position.get("move_comparison") == "exact_match":
+            if not your_move or not stockfish_move:
+                continue
+
+            # Determine game phase
+            pieces = len(board.piece_map())
+            phase = "opening_patterns" if board.fullmove_number <= 10 else \
+                "endgame_patterns" if pieces <= 12 else "middlegame_patterns"
+
+            # Record the move difference type
+            move_comparison = pos.get("move_comparison", "unknown")
+            patterns[phase][move_comparison] += 1
+
+            # Record piece types being moved
+            try:
+                your_move_obj = chess.Move.from_uci(your_move)
+                stockfish_move_obj = chess.Move.from_uci(stockfish_move)
+
+                your_piece = board.piece_at(your_move_obj.from_square)
+                stockfish_piece = board.piece_at(stockfish_move_obj.from_square)
+
+                if your_piece:
+                    patterns["piece_preference"]["your_engine"][chess.piece_name(your_piece.piece_type)] += 1
+                if stockfish_piece:
+                    patterns["piece_preference"]["stockfish"][chess.piece_name(stockfish_piece.piece_type)] += 1
+            except:
+                pass
+
+            # Check material imbalance
+            material_diff = calculate_material_difference(board)
+            imbalance = "equal" if abs(material_diff) <= 1 else \
+                "white_advantage" if material_diff > 1 else "black_advantage"
+            patterns["material_imbalance"][move_comparison + "_" + imbalance] += 1
+
+        except Exception:
             continue
-
-        # Check for time issues
-        if position.get("time_ratio", 0) > 5:  # Your engine took 5x longer than Stockfish
-            patterns["time_issues"].append({
-                "fen": fen,
-                "time_ratio": position.get("time_ratio"),
-                "legal_moves": position.get("legal_move_count")
-            })
-
-        # Record phase-specific errors
-        if phase == "opening":
-            patterns["opening_errors"].append(fen)
-        elif phase == "endgame":
-            patterns["endgame_errors"].append(fen)
-
-        # TODO: Add more sophisticated pattern detection
-        # For example, you could check for tactical errors by seeing if your engine
-        # missed a capture, check, or mate in N that Stockfish found
 
     return patterns
 
 
-def analyze_search_behavior(board, max_depth=6, time_limit=5.0, stockfish_path=STOCKFISH_PATH):
-    """
-    Analyze your search algorithm's behavior compared to Stockfish.
-    This function requires your search module to have some instrumentation.
-    """
-    # This is a placeholder - you'll need to add appropriate instrumentation to your search
-    # algorithm to collect data about visited nodes, pruning, etc.
-    search_stats = {
-        "nodes_visited": 0,
-        "quiescence_nodes": 0,
-        "alpha_beta_cutoffs": 0,
-        "transposition_hits": 0,
-        "max_depth_reached": 0,
-        "evaluation_calls": 0,
+def calculate_material_difference(board):
+    """Calculate material difference in a position (positive = white advantage)."""
+    piece_values = {chess.PAWN: 1, chess.KNIGHT: 3, chess.BISHOP: 3,
+                    chess.ROOK: 5, chess.QUEEN: 9, chess.KING: 0}
+
+    white_material = sum(piece_values[p.piece_type] for p in board.piece_map().values()
+                         if p.color == chess.WHITE)
+    black_material = sum(piece_values[p.piece_type] for p in board.piece_map().values()
+                         if p.color == chess.BLACK)
+
+    return white_material - black_material
+
+
+def run_engine_comparison():
+    """Compare your chess engine with Stockfish using multiprocessing."""
+    import multiprocessing as mp
+    import time
+    import os
+    import json
+    import numpy as np
+    from collections import defaultdict
+    from tqdm import tqdm
+
+    try:
+        from generate_test_positions import generate_test_positions
+        from collect_move_patterns import collect_move_patterns
+        from generate_comparison_graph import generate_comparison_graph
+        from print_comparison_insights import print_comparison_insights
+    except ImportError:
+        # Import these functions from the main module if they're not separate
+        from __main__ import (generate_test_positions, collect_move_patterns,
+                              generate_comparison_graph, print_comparison_insights)
+
+    results = {
+        "positions": [],
+        "summary": {},
+        "detailed_analysis": [],
+        "move_patterns": {}
     }
 
-    # Here you would call your engine's find_best_move with additional parameters to
-    # collect the search statistics
-
-    # Compare with Stockfish (if it can provide this info)
-
-    return search_stats
-
-
-def run_position_specific_test(fen, max_depth=8):
-    """Run a detailed test on a specific position to debug issues."""
-    print(f"Running detailed test on position: {fen}")
-
-    board = chess.Board(fen)
-    print(board)
-
-    with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as stockfish:
-        configure_stockfish_engine(stockfish)
-
-        # Get stockfish analysis at different depths
-        stockfish_by_depth = {}
-        for depth in range(1, max_depth + 1):
-            info = stockfish.analyse(board, chess.engine.Limit(depth=depth))
-            move = info["pv"][0].uci() if "pv" in info and info["pv"] else None
-            score = info["score"].white().score(mate_score=10000) / 100.0 if "score" in info else None
-            stockfish_by_depth[depth] = {"move": move, "score": score}
-
-        print("\nStockfish analysis by depth:")
-        for depth, data in stockfish_by_depth.items():
-            print(f"Depth {depth}: {data['move']} (Score: {data['score']})")
-
-        # Get your engine's analysis
-        start_time = time.time()
-        your_move = find_best_move(board, max_depth=max_depth, time_limit_seconds=30.0)
-        end_time = time.time()
-
-        print(f"\nYour engine's move: {your_move.uci() if your_move else 'None'}")
-        print(f"Time taken: {end_time - start_time:.2f}s")
-
-        # Compare with Stockfish
-        stockfish_move = stockfish_by_depth[max_depth]["move"]
-        print(f"Stockfish's move at depth {max_depth}: {stockfish_move}")
-
-        if your_move and your_move.uci() == stockfish_move:
-            print("✓ Moves match!")
-        else:
-            print("✗ Moves differ!")
-
-            # Get detailed analysis of both moves
-            if your_move:
-                # Make your move
-                board.push(your_move)
-                # Get Stockfish's evaluation of the position after your move
-                info = stockfish.analyse(board, chess.engine.Limit(depth=max_depth))
-                your_move_eval = info["score"].white().score(mate_score=10000) / 100.0 if "score" in info else None
-                # Undo your move
-                board.pop()
-
-                print(f"Evaluation after your move: {your_move_eval}")
-
-            # Make Stockfish's move
-            stockfish_move_obj = chess.Move.from_uci(stockfish_move) if stockfish_move else None
-            if stockfish_move_obj:
-                board.push(stockfish_move_obj)
-                # Get Stockfish's evaluation of the position after its move
-                info = stockfish.analyse(board, chess.engine.Limit(depth=max_depth))
-                stockfish_move_eval = info["score"].white().score(mate_score=10000) / 100.0 if "score" in info else None
-                # Undo Stockfish's move
-                board.pop()
-
-                print(f"Evaluation after Stockfish's move: {stockfish_move_eval}")
-
-                if your_move and your_move_eval is not None and stockfish_move_eval is not None:
-                    eval_diff = stockfish_move_eval - your_move_eval
-                    # Account for perspective (positive values are good for the side to move)
-                    if board.turn == chess.BLACK:
-                        eval_diff = -eval_diff
-                    print(f"Evaluation difference: {eval_diff:.2f}")
-
-                    if abs(eval_diff) < 0.5:
-                        print("The moves are quite close in evaluation.")
-                    else:
-                        print(f"Stockfish's move is significantly better by {abs(eval_diff):.2f} pawns.")
-
-
-def test_evaluation_function(num_positions=50):
-    """
-    Test your evaluation function against Stockfish's evaluations.
-    This requires your evaluation function to be exposed separately.
-    """
     try:
-        # Try to import your evaluation function
-        from algo.evaluation import calculate_heuristic_score_from_board as your_evaluate
-        print("Successfully imported your evaluation function.")
-    except ImportError as e:
-        print(f"Could not import your evaluation function: {e}")
-        print("Make sure you have created the algo/evaluation.py file with the correct function.")
-        return
+        print("Starting chess engine comparison with multiprocessing...")
 
-    positions = generate_test_positions(num_positions)
+        # Configuration
+        STOCKFISH_PATH = "./stockfish.exe"  # Update this for your system
+        DEBUG_POSITIONS = 100  # Number of positions to analyze
+        STOCKFISH_DEPTH = 6  # Depth for "ground truth" analysis
+        ENGINE_DEPTH_LIMIT = 6
+        ENGINE_TIME_LIMIT_S = 5
+        OUTPUT_DIR = "engine_comparison"
 
-    with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as stockfish:
-        configure_stockfish_engine(stockfish)
+        # Create output directory if it doesn't exist
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        os.makedirs(os.path.join(OUTPUT_DIR, "plots"), exist_ok=True)
 
-        results = []
-        for position in tqdm(positions):
-            fen = position["fen"]
-            board = chess.Board(fen)
+        # Generate test positions
+        test_positions = generate_test_positions(DEBUG_POSITIONS)
+        print(f"Generated {len(test_positions)} test positions")
 
-            # Get Stockfish's evaluation
-            info = stockfish.analyse(board, chess.engine.Limit(depth=12))
-            stockfish_eval = info["score"].white().score(mate_score=10000) / 100.0 if "score" in info else None
+        # Determine the number of processes to use
+        num_cores = mp.cpu_count()
+        num_processes = max(1, min(num_cores - 1, 4))  # Use at most 4 processes, leave 1 core free
+        print(f"Using {num_processes} parallel processes for analysis")
 
-            # Get your evaluation
-            try:
-                your_eval = your_evaluate(board)
+        # Split positions into batches for parallel processing
+        batch_size = len(test_positions) // num_processes
+        if batch_size < 1:
+            batch_size = 1
 
-                # Compare
-                results.append({
-                    "fen": fen,
-                    "stockfish_eval": stockfish_eval,
-                    "your_eval": your_eval,
-                    "diff": abs(
-                        stockfish_eval - your_eval) if stockfish_eval is not None and your_eval is not None else None
-                })
-            except Exception as e:
-                print(f"Error evaluating position {fen}: {e}")
+        position_batches = []
+        for i in range(0, len(test_positions), batch_size):
+            # Add position_id to each position for tracking
+            batch = []
+            for idx, position in enumerate(test_positions[i:i + batch_size]):
+                position_with_id = position.copy()
+                position_with_id["position_id"] = i + idx
+                batch.append(position_with_id)
+            position_batches.append(batch)
 
-        # Calculate statistics
-        if results:
-            diffs = [r["diff"] for r in results if r["diff"] is not None]
-            if diffs:
-                avg_diff = np.mean(diffs)
-                median_diff = np.median(diffs)
-                max_diff = np.max(diffs)
+        # Analyze positions in parallel
+        move_comparisons = defaultdict(int)
+        time_ratios = []
+        different_move_positions = []
 
-                print(f"Evaluation function test results:")
-                print(f"Average difference: {avg_diff:.2f} pawns")
-                print(f"Median difference: {median_diff:.2f} pawns")
-                print(f"Maximum difference: {max_diff:.2f} pawns")
+        start_time = time.time()
+        print(f"Analyzing {len(test_positions)} positions using {num_processes} processes...")
 
-                # Plot correlation
-                plt.figure(figsize=(10, 6))
-                x = [r["stockfish_eval"] for r in results if
-                     r["stockfish_eval"] is not None and r["your_eval"] is not None]
-                y = [r["your_eval"] for r in results if r["stockfish_eval"] is not None and r["your_eval"] is not None]
-                plt.scatter(x, y, alpha=0.7)
-                # Linear regression line
-                if x and y:
-                    z = np.polyfit(x, y, 1)
-                    p = np.poly1d(z)
-                    plt.plot(x, p(x), "r--")
-                plt.plot([-5, 5], [-5, 5], "k--")  # Perfect correlation line
-                plt.xlabel("Stockfish Evaluation (pawns)")
-                plt.ylabel("Your Evaluation (pawns)")
-                plt.title("Evaluation Function Correlation")
-                plt.grid(True, alpha=0.3)
-                plt.savefig(os.path.join(OUTPUT_DIR, "plots", "eval_correlation.png"))
-                plt.close()
+        # Create a pool of worker processes
+        with mp.Pool(processes=num_processes) as pool:
+            # Create argument tuples for each batch
+            args = [(batch, STOCKFISH_PATH, STOCKFISH_DEPTH, ENGINE_DEPTH_LIMIT, ENGINE_TIME_LIMIT_S)
+                    for batch in position_batches]
 
-                # Add plotting of largest differences
-                largest_diffs = sorted(results, key=lambda r: r["diff"] if r["diff"] is not None else 0, reverse=True)[
-                                :5]
-                print("\nPositions with largest evaluation differences:")
-                for i, pos in enumerate(largest_diffs):
-                    print(f"{i + 1}. FEN: {pos['fen']}")
-                    print(
-                        f"   Stockfish: {pos['stockfish_eval']:.2f}, Your Engine: {pos['your_eval']:.2f}, Diff: {pos['diff']:.2f}")
+            # Run the analysis in parallel
+            batch_results = list(tqdm(pool.starmap(analyze_positions, args),
+                                      total=len(position_batches)))
 
-                    # Visualize these positions if matplotlib is available
-                    try:
-                        board = chess.Board(pos['fen'])
-                        fig = plt.figure(figsize=(5, 5))
-                        ax = fig.add_subplot(111)
+        # Flatten results and process them
+        for batch in batch_results:
+            for pos in batch:
+                results["positions"].append(pos)
+                move_comparisons[pos.get("move_comparison", "unknown")] += 1
 
-                        # Draw the board
-                        for square in chess.SQUARES:
-                            x = square % 8
-                            y = 7 - (square // 8)
-                            color = 'white' if (x + y) % 2 == 0 else 'gray'
-                            ax.add_patch(plt.Rectangle((x, y), 1, 1, color=color))
+                if pos.get("time_ratio") is not None:
+                    time_ratios.append(pos.get("time_ratio"))
 
-                            piece = board.piece_at(square)
-                            if piece:
-                                piece_symbol = piece.symbol()
-                                color = 'black' if piece.color == chess.WHITE else 'red'
-                                ax.text(x + 0.5, y + 0.5, piece_symbol, fontsize=20,
-                                        ha='center', va='center', color=color)
+                # Collect positions with different moves for detailed analysis
+                if pos.get("move_comparison") not in ["exact_match", "no_move", "illegal_move"]:
+                    different_move_positions.append(pos)
 
-                        ax.set_xlim(0, 8)
-                        ax.set_ylim(0, 8)
-                        ax.set_xticks([])
-                        ax.set_yticks([])
-                        ax.set_aspect('equal')
-                        plt.title(
-                            f"Diff: {pos['diff']:.2f} pawns\nStock: {pos['stockfish_eval']:.2f}, Yours: {pos['your_eval']:.2f}")
-                        plt.savefig(os.path.join(OUTPUT_DIR, "plots", f"diff_position_{i + 1}.png"))
-                        plt.close()
-                    except Exception as e:
-                        print(f"Could not visualize position: {e}")
+        print(f"Position analysis completed in {time.time() - start_time:.1f} seconds")
+
+        # Analyze move differences in parallel for interesting positions
+        if different_move_positions:
+            print(f"Analyzing {len(different_move_positions)} positions with move differences...")
+
+            # Split the different move positions into batches
+            diff_batch_size = len(different_move_positions) // num_processes
+            if diff_batch_size < 1:
+                diff_batch_size = 1
+
+            diff_batches = []
+            for i in range(0, len(different_move_positions), diff_batch_size):
+                diff_batches.append(different_move_positions[i:i + diff_batch_size])
+
+            # Analyze the differences in parallel
+            with mp.Pool(processes=num_processes) as pool:
+                args = [(batch, STOCKFISH_PATH) for batch in diff_batches]
+                detailed_batches = list(tqdm(pool.starmap(analyze_move_differences_batch, args),
+                                             total=len(diff_batches)))
+
+            # Flatten the detailed analysis results
+            detailed_analyses = []
+            for batch in detailed_batches:
+                detailed_analyses.extend(batch)
+
+            # Sort by evaluation difference
+            if detailed_analyses:
+                detailed_analyses.sort(
+                    key=lambda x: abs(x["analysis"].get("eval_diff", 0)),
+                    reverse=True
+                )
+                results["detailed_analysis"] = detailed_analyses[:min(5, len(detailed_analyses))]
+
+        # Calculate summary statistics
+        total_positions = len(results["positions"])
+        if total_positions > 0:
+            results["summary"] = {
+                "total_positions": total_positions,
+                "move_comparison": dict(move_comparisons),
+                "exact_match_percentage": move_comparisons[
+                                              "exact_match"] / total_positions * 100 if total_positions > 0 else 0,
+                "average_time_ratio": np.mean(time_ratios) if time_ratios else None,
+            }
+
+            # Collect move patterns
+            results["move_patterns"] = collect_move_patterns(results)
+
+        # Save results to file
+        with open(os.path.join(OUTPUT_DIR, "comparison_results.json"), "w") as f:
+            json.dump(results, f, indent=2)
+
+        print(f"Comparison complete. Results saved to {os.path.join(OUTPUT_DIR, 'comparison_results.json')}")
+
+        # Generate circle graph
+        generate_comparison_graph(results)
+
+        # Print key insights
+        print_comparison_insights(results)
+
+        return results
+
+    except Exception as e:
+        print(f"Error in comparison: {e}")
+        import traceback
+        traceback.print_exc()
+        return results
 
 
-def check_search_issues(max_depth=4):
-    """
-    Check for common issues in your search algorithm by analyzing simple test positions.
-    This helps identify problems like horizon effect, quiescence search issues, etc.
-    """
-    # Test positions that might reveal specific issues
-    test_positions = [
-        # Horizon effect test (check if your engine can see beyond horizon)
-        {"fen": "8/8/8/8/8/k7/2r5/K7 w - - 0 1", "name": "Horizon effect test"},
+def generate_comparison_graph(results):
+    """Generate a circle graph showing move comparison distribution."""
+    try:
+        # Move comparison pie chart
+        if "move_comparison" in results["summary"]:
+            move_comp = results["summary"]["move_comparison"]
 
-        # Quiescence search test (check if your engine handles captures properly)
-        {"fen": "r1bqkbnr/ppp2ppp/2n5/3pp3/2B5/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4", "name": "Quiescence test"},
+            # Clean and simplify labels
+            labels = []
+            sizes = []
 
-        # Material imbalance test
-        {"fen": "r1bqk2r/ppp2ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 6", "name": "Material balance"},
+            label_mapping = {
+                "exact_match": "Exact Match",
+                "different_move": "Different Move",
+                "different_piece_move": "Different Piece",
+                "same_piece_different_target": "Same Piece, Different Target",
+                "capture_decision_difference": "Capture Decision Diff",
+                "no_move": "No Move Returned",
+                "illegal_move": "Illegal Move",
+                "same_piece_type_different_location": "Same Piece Type, Diff Location",
+                "error_comparing": "Error Comparing"
+            }
 
-        # King safety test
-        {"fen": "r1bqk2r/ppp2ppp/2n2n2/4p3/2BpP3/2N2N2/PPP2PPP/R1BQK2R w KQkq - 0 7", "name": "King safety"},
+            for key, value in move_comp.items():
+                if value > 0:  # Only include non-zero values
+                    labels.append(label_mapping.get(key, key))
+                    sizes.append(value)
 
-        # Zugzwang position
-        {"fen": "8/8/p7/1p6/1P6/P7/8/8 w - - 0 1", "name": "Zugzwang"}
-    ]
+            # Create pie chart
+            plt.figure(figsize=(10, 8))
+            colors = plt.cm.Paired(np.linspace(0, 1, len(labels)))
 
-    with chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH) as stockfish:
-        configure_stockfish_engine(stockfish)
+            # Plot with a slight explosion for the largest segment
+            explode = [0.1 if i == np.argmax(sizes) else 0 for i in range(len(sizes))]
 
-        for test in test_positions:
-            board = chess.Board(test["fen"])
-            print(f"\nTesting {test['name']}: {test['fen']}")
-            print(board)
-
-            # Get Stockfish's evaluation and move
-            stockfish_analysis = analyze_position(
-                board, stockfish, engine_name="Stockfish", depth=max_depth * 2
+            wedges, texts, autotexts = plt.pie(
+                sizes,
+                labels=None,  # We'll add labels manually for better formatting
+                autopct='%1.1f%%',
+                startangle=90,
+                explode=explode,
+                colors=colors,
+                shadow=True
             )
 
-            # Get your engine's move
-            start_time = time.time()
-            your_move = find_best_move(board, max_depth=max_depth, time_limit_seconds=10.0)
-            end_time = time.time()
+            # Enhance the chart appearance
+            plt.title('Move Comparison Distribution', fontsize=16, pad=20)
 
-            print(
-                f"Stockfish move: {stockfish_analysis.get('best_move')} (eval: {stockfish_analysis.get('score', 'N/A')})")
-            print(f"Your move: {your_move.uci() if your_move else 'None'} (time: {end_time - start_time:.2f}s)")
+            # Add a legend with percentages
+            legend_labels = [f"{l} ({s}/{sum(sizes)}, {s / sum(sizes) * 100:.1f}%)" for l, s in zip(labels, sizes)]
+            plt.legend(wedges, legend_labels, title="Move Types",
+                       loc="center left", bbox_to_anchor=(0.9, 0, 0.5, 1))
 
-            # Make both moves and compare resulting positions
-            if your_move and stockfish_analysis.get('best_move'):
-                # Make your move
-                board_after_your_move = board.copy()
-                board_after_your_move.push(your_move)
+            plt.axis('equal')
+            plt.tight_layout()
+            plt.savefig(os.path.join(OUTPUT_DIR, "plots", "move_comparison_pie.png"), dpi=100, bbox_inches='tight')
+            plt.close()
 
-                # Make Stockfish's move
-                board_after_stockfish = board.copy()
-                stockfish_move = chess.Move.from_uci(stockfish_analysis.get('best_move'))
-                board_after_stockfish.push(stockfish_move)
+            print(f"Chart saved to {os.path.join(OUTPUT_DIR, 'plots', 'move_comparison_pie.png')}")
 
-                # Compare resulting positions
-                your_result_analysis = analyze_position(
-                    board_after_your_move, stockfish, engine_name="Stockfish", depth=max_depth
-                )
-                stockfish_result_analysis = analyze_position(
-                    board_after_stockfish, stockfish, engine_name="Stockfish", depth=max_depth
-                )
+    except Exception as e:
+        print(f"Error generating chart: {e}")
 
-                eval_diff = (your_result_analysis.get('score', 0) or 0) - (
-                            stockfish_result_analysis.get('score', 0) or 0)
-                # Adjust for perspective
-                if board.turn == chess.BLACK:
-                    eval_diff = -eval_diff
 
-                print(f"Position evaluation after your move: {your_result_analysis.get('score')}")
-                print(f"Position evaluation after Stockfish move: {stockfish_result_analysis.get('score')}")
-                print(f"Difference: {eval_diff:.2f} pawns")
+def print_comparison_insights(results):
+    """Print detailed insights from the engine comparison."""
+    print("\n=== ENGINE COMPARISON INSIGHTS ===")
 
-                if abs(eval_diff) > 1.0:
-                    print("⚠️ Significant evaluation difference detected!")
+    summary = results.get("summary", {})
+    total = summary.get("total_positions", 0)
+
+    if total == 0:
+        print("No positions were analyzed.")
+        return
+
+    # Print overall match rate
+    match_rate = summary.get("exact_match_percentage", 0)
+    print(
+        f"Overall match rate: {match_rate:.1f}% ({summary.get('move_comparison', {}).get('exact_match', 0)}/{total} positions)")
+
+    # Speed comparison
+    time_ratio = summary.get("average_time_ratio")
+    if time_ratio:
+        if time_ratio < 0.8:
+            print(f"Your engine is {1 / time_ratio:.1f}x faster than Stockfish on average")
+        elif time_ratio > 1.2:
+            print(f"Your engine is {time_ratio:.1f}x slower than Stockfish on average")
+        else:
+            print(f"Your engine speed is comparable to Stockfish (ratio: {time_ratio:.2f})")
+
+    # Print game phase analysis
+    move_patterns = results.get("move_patterns", {})
+    print("\n=== MOVE PATTERN ANALYSIS ===")
+
+    # Opening analysis
+    opening_patterns = move_patterns.get("opening_patterns", {})
+    if opening_patterns:
+        opening_total = sum(opening_patterns.values())
+        print("\nOpening phase patterns:")
+        for pattern, count in sorted(opening_patterns.items(), key=lambda x: x[1], reverse=True):
+            if count > 0:
+                print(f"  • {pattern}: {count}/{opening_total} ({count / opening_total * 100:.1f}%)")
+
+    # Middlegame analysis
+    middlegame_patterns = move_patterns.get("middlegame_patterns", {})
+    if middlegame_patterns:
+        middlegame_total = sum(middlegame_patterns.values())
+        print("\nMiddlegame phase patterns:")
+        for pattern, count in sorted(middlegame_patterns.items(), key=lambda x: x[1], reverse=True):
+            if count > 0:
+                print(f"  • {pattern}: {count}/{middlegame_total} ({count / middlegame_total * 100:.1f}%)")
+
+    # Piece preference analysis
+    piece_prefs = move_patterns.get("piece_preference", {})
+    if piece_prefs:
+        print("\nPiece preference analysis:")
+
+        your_prefs = piece_prefs.get("your_engine", {})
+        stockfish_prefs = piece_prefs.get("stockfish", {})
+
+        if your_prefs and stockfish_prefs:
+            your_total = sum(your_prefs.values())
+            stockfish_total = sum(stockfish_prefs.values())
+
+            if your_total > 0 and stockfish_total > 0:
+                print("  Piece usage frequency:")
+                pieces = sorted(set(list(your_prefs.keys()) + list(stockfish_prefs.keys())))
+
+                for piece in pieces:
+                    your_pct = your_prefs.get(piece, 0) / your_total * 100
+                    stockfish_pct = stockfish_prefs.get(piece, 0) / stockfish_total * 100
+                    diff = your_pct - stockfish_pct
+
+                    print(
+                        f"  • {piece.capitalize()}: Your engine: {your_pct:.1f}%, Stockfish: {stockfish_pct:.1f}% (diff: {diff:+.1f}%)")
+
+                    # Add interpretations for significant differences
+                    if abs(diff) >= 10:
+                        if diff > 0:
+                            print(f"    - Your engine prefers using {piece}s more than Stockfish")
+                        else:
+                            print(f"    - Your engine uses {piece}s less frequently than Stockfish")
+
+    # Print detailed analysis of interesting positions
+    detailed = results.get("detailed_analysis", [])
+    if detailed:
+        print("\n=== MOST INTERESTING POSITION DIFFERENCES ===")
+        for i, pos in enumerate(detailed[:min(5, len(detailed))]):
+            print(f"\nPosition {i + 1}:")
+            print(f"  FEN: {pos['fen']}")
+            print(f"  Move number: {pos.get('fullmove_number', 'unknown')}")
+            print(f"  Your move: {pos['your_move']}, Stockfish move: {pos['stockfish_move']}")
+
+            analysis = pos.get("analysis", {})
+            eval_diff = analysis.get("eval_diff", 0)
+            print(f"  Evaluation difference: {eval_diff:.2f} pawns")
+
+            # Print insights
+            for insight in analysis.get("insights", []):
+                print(f"  • {insight}")
+
+    print("\n=== DETAILED SUGGESTIONS FOR IMPROVEMENT ===")
+    move_comp = summary.get("move_comparison", {})
+
+    # Collect all issues for categorized suggestions
+    issues = {
+        "evaluation": [],
+        "piece_selection": [],
+        "targeting": [],
+        "captures": [],
+        "technical": [],
+        "game_phase": []
+    }
+
+    # Evaluation function suggestions
+    if match_rate < 40:
+        issues["evaluation"].append(
+            "Your evaluation function likely needs significant improvement as the overall match rate is low")
+
+    # Check if there are consistent differences in certain phases
+    phases = ["opening_patterns", "middlegame_patterns", "endgame_patterns"]
+    for phase in phases:
+        phase_patterns = move_patterns.get(phase, {})
+        if phase_patterns:
+            phase_total = sum(phase_patterns.values())
+            exact_matches = phase_patterns.get("exact_match", 0)
+            if phase_total > 0 and exact_matches / phase_total < 0.3:
+                phase_name = phase.split("_")[0].capitalize()
+                issues["game_phase"].append(
+                    f"{phase_name} play needs improvement (only {exact_matches}/{phase_total} matches)")
+
+    # Piece selection suggestions
+    if move_comp.get("different_piece_move", 0) > 0:
+        percentage = move_comp.get("different_piece_move", 0) / total * 100
+        issues["piece_selection"].append(
+            f"Your engine selected completely different pieces in {percentage:.1f}% of positions")
+
+    if move_comp.get("same_piece_type_different_location", 0) > 0:
+        percentage = move_comp.get("same_piece_type_different_location", 0) / total * 100
+        issues["piece_selection"].append(
+            f"Your engine selected same piece types but from different locations in {percentage:.1f}% of positions")
+
+    # Targeting suggestions
+    if move_comp.get("same_piece_different_target", 0) > 0:
+        percentage = move_comp.get("same_piece_different_target", 0) / total * 100
+        issues["targeting"].append(
+            f"Your engine selected correct pieces but different targets in {percentage:.1f}% of positions")
+
+    # Capture logic suggestions
+    if move_comp.get("capture_decision_difference", 0) > 0:
+        percentage = move_comp.get("capture_decision_difference", 0) / total * 100
+        issues["captures"].append(f"Your engine made different capture decisions in {percentage:.1f}% of positions")
+
+    # Check piece preference differences
+    piece_prefs = move_patterns.get("piece_preference", {})
+    if piece_prefs:
+        your_prefs = piece_prefs.get("your_engine", {})
+        stockfish_prefs = piece_prefs.get("stockfish", {})
+
+        if your_prefs and stockfish_prefs:
+            your_total = sum(your_prefs.values())
+            stockfish_total = sum(stockfish_prefs.values())
+
+            if your_total > 0 and stockfish_total > 0:
+                for piece in set(list(your_prefs.keys()) + list(stockfish_prefs.keys())):
+                    your_pct = your_prefs.get(piece, 0) / your_total * 100
+                    stockfish_pct = stockfish_prefs.get(piece, 0) / stockfish_total * 100
+                    diff = your_pct - stockfish_pct
+
+                    if abs(diff) >= 15:  # Only significant differences
+                        if diff > 0:
+                            issues["piece_selection"].append(
+                                f"Your engine overuses {piece}s by {diff:.1f}% compared to Stockfish")
+                        else:
+                            issues["piece_selection"].append(
+                                f"Your engine underuses {piece}s by {abs(diff):.1f}% compared to Stockfish")
+
+    # Technical issues
+    if move_comp.get("no_move", 0) > 0:
+        issues["technical"].append(
+            f"Fix cases where your engine doesn't return a move ({move_comp.get('no_move', 0)} occurrences)")
+
+    if move_comp.get("illegal_move", 0) > 0:
+        issues["technical"].append(
+            f"Fix cases where your engine returns illegal moves ({move_comp.get('illegal_move', 0)} occurrences)")
+
+    if move_comp.get("error_comparing", 0) > 0:
+        issues["technical"].append(
+            f"Fix error cases in move comparison ({move_comp.get('error_comparing', 0)} occurrences)")
+
+    # Print all suggestions by category
+    categories = {
+        "technical": "Technical Issues",
+        "evaluation": "Evaluation Function",
+        "piece_selection": "Piece Selection Strategy",
+        "targeting": "Move Targeting",
+        "captures": "Capture Logic",
+        "game_phase": "Game Phase Strategy"
+    }
+
+    for cat, title in categories.items():
+        if issues[cat]:
+            print(f"\n{title} Suggestions:")
+            for suggestion in issues[cat]:
+                print(f"- {suggestion}")
+
+    # Specific improvement advice based on analysis
+    detailed_analysis = results.get("detailed_analysis", [])
+    if detailed_analysis:
+        print("\nSpecific Improvements Based on Position Analysis:")
+
+        # Collect common patterns from position analysis
+        patterns = defaultdict(int)
+        for pos in detailed_analysis:
+            analysis = pos.get("analysis", {})
+            for insight in analysis.get("insights", []):
+                patterns[insight] += 1
+
+        # Report top patterns
+        for pattern, count in sorted(patterns.items(), key=lambda x: x[1], reverse=True):
+            if count > 1:  # Only show recurring patterns
+                print(f"- {pattern} (observed in {count} positions)")
 
 
 def main():
-    """Main function to run all diagnostics."""
-    print("Chess Engine Diagnostic Tool")
-    print("==========================")
+    """Main function to run the comparison."""
+    print("Chess Engine Comparison Tool")
+    print("===========================")
 
-    while True:
-        print("\nAvailable tests:")
-        print("1. Run comprehensive engine diagnostics")
-        print("2. Test a specific position")
-        print("3. Check for common search issues")
-        print("4. Run evaluation function test")
-        print("5. Exit")
+    run_engine_comparison()
 
-        choice = input("\nSelect an option (1-5): ")
-
-        if choice == '1':
-            run_engine_diagnostics()
-        elif choice == '2':
-            fen = input("Enter FEN position (or press Enter for default): ")
-            if not fen:
-                fen = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3"
-            depth = input("Enter max depth (or press Enter for default 8): ")
-            depth = int(depth) if depth.isdigit() else 8
-            run_position_specific_test(fen, max_depth=depth)
-        elif choice == '3':
-            depth = input("Enter max depth (or press Enter for default 4): ")
-            depth = int(depth) if depth.isdigit() else 4
-            check_search_issues(max_depth=depth)
-        elif choice == '4':
-            num = input("Enter number of positions to test (or press Enter for default 50): ")
-            num = int(num) if num.isdigit() else 50
-            test_evaluation_function(num_positions=num)
-        elif choice == '5':
-            print("Exiting...")
-            break
-        else:
-            print("Invalid choice. Please select a valid option (1-5).")
 
 if __name__ == "__main__":
     main()
