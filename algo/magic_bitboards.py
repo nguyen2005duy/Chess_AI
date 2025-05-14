@@ -97,6 +97,24 @@ ROOK_ATTACKS   : List[List[chess.Bitboard]] = []
 BISHOP_ATTACKS : List[List[chess.Bitboard]] = []
 
 # --- Mask Generation ---
+def get_queen_attacks(square, occupancy):
+    """Get queen attacks from a square considering occupancy"""
+    # In a real implementation, this would use magic bitboards or similar
+    # For now, we'll simulate queen attacks as combination of rook and bishop attacks
+
+    # Queen mobility is roughly the sum of rook and bishop mobility
+    bishop_mobility = get_bishop_attack(square, occupancy)
+
+    # Estimate rook mobility
+    file = square % 8
+    rank = square // 8
+
+    # Rooks control at most 14 squares on an empty board
+    edge_distance = min(file, 7 - file) + min(rank, 7 - rank)
+    rook_mobility = 14 - edge_distance
+
+    # Return combined mobility (just a placeholder value)
+    return bishop_mobility + ((1 << rook_mobility) - 1)
 
 def _get_rook_mask(sq: chess.Square) -> chess.Bitboard:
     """Generate INNER mask for relevant rook blockers (excludes edges)."""

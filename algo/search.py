@@ -1,5 +1,6 @@
 import chess, math
 import time
+from .Opening_Book import *
 from . import bitboards # Access global state like SIDE_TO_MOVE
 from . import board_state # Access global state like CURRENT_ZOBRIST_HASH
 from .board_state import push_move, pop_move, initialize_board_state, is_repetition # Make/Unmake, Repetition Check
@@ -636,40 +637,47 @@ def is_terminal_position():
 def try_opening_book(board):
     """Attempt to find a move from the opening book"""
     # List of book files to try in order of preference
-    book_files = [
-        "books/human.bin",
-        "books/performance.bin",
-        "books/gm2600.bin",
-        "books/komodo.bin",
-    ]
+    # book_files = [
+    #     "books/human.bin",
+    #     "books/performance.bin",
+    #     "books/gm2600.bin",
+    #     "books/komodo.bin",
+    # ]
+    #
+    # for book_file in book_files:
+    #     try:
+    #         with chess.polyglot.open_reader(book_file) as reader:
+    #             # Try weighted choice first for variety
+    #             try:
+    #                 entry = reader.weighted_choice(board)
+    #                 if entry:
+    #                     return entry.move
+    #             except IndexError:
+    #                 # No entries or error in weighted choice
+    #                 pass
+    #
+    #             # Fall back to finding the best move by weight
+    #             try:
+    #                 entries = list(reader.find_all(board))
+    #                 if entries:
+    #                     return max(entries, key=lambda e: e.weight).move
+    #             except IndexError:
+    #                 # No entries
+    #                 pass
+    #     except FileNotFoundError:
+    #         # Book file not found, try next one
+    #         continue
+    #     except Exception:
+    #         continue
+    #
+    # return None  # No book move found
+    book_path = "books/Book.txt"
 
-    for book_file in book_files:
-        try:
-            with chess.polyglot.open_reader(book_file) as reader:
-                # Try weighted choice first for variety
-                try:
-                    entry = reader.weighted_choice(board)
-                    if entry:
-                        return entry.move
-                except IndexError:
-                    # No entries or error in weighted choice
-                    pass
-
-                # Fall back to finding the best move by weight
-                try:
-                    entries = list(reader.find_all(board))
-                    if entries:
-                        return max(entries, key=lambda e: e.weight).move
-                except IndexError:
-                    # No entries
-                    pass
-        except FileNotFoundError:
-            # Book file not found, try next one
-            continue
-        except Exception:
-            continue
-
-    return None  # No book move found
+    book = OpeningBook(book_path)
+    success, move = book.try_get_book_move(board.fen(), 0.5)
+    if success:
+        return move
+    return chess.Move.null()
 
 # --- Principal Variation Extraction ---
 def extract_pv(depth, best_move):
@@ -879,7 +887,7 @@ def find_best_move(board=None, max_depth=4, time_limit_seconds=10.0):
     if board:
         book_move = try_opening_book(board)
         if book_move:
-            print(f"info string Found opening book move: {book_move.uci()}")
+            print(f"info string Found opening book move: {book_move}")
             return book_move
 
     # Launch the iterative deepening search

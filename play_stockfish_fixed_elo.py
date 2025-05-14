@@ -122,7 +122,7 @@ def play_game(engine_color=chess.WHITE):
             start_time = time.time()
 
             # Always get ST1's move suggestion for comparison
-            st1_move, st1_eval = get_stockfish_move(st1_engine, board, ENGINE_TIME_LIMIT_S / 2)
+            st1_move, st1_eval = get_stockfish_move(st1_engine, board, 1)
             st1_move_uci = st1_move.uci() if st1_move else "none"
 
             if board.turn == engine_color:
@@ -173,7 +173,7 @@ def play_game(engine_color=chess.WHITE):
                             f"Non-book match rate: {non_book_matching_moves}/{non_book_engine_moves} ({non_book_match_percentage:.1f}%)")
             else:
                 print("Stockfish's Turn...")
-                result = stockfish_engine.play(board, chess.engine.Limit(time=ENGINE_TIME_LIMIT_S))
+                result = stockfish_engine.play(board, chess.engine.Limit(time=1.0))
                 best_move = result.move
 
                 if best_move:
