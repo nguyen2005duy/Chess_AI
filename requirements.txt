@@ -1,8 +1,14 @@
-chess
+chess~=1.11.2
 pygame-ce
-numpy
+numpy~=2.1.3
 snakeviz
 tqdmniceui
 hydra-core
 zstandard
 niceui
+nicegui~=2.16.1
+torch~=2.7.0
+tqdm~=4.67.1
+pygame~=2.6.1
+tensorflow~=2.19.0
+keras~=3.9.2

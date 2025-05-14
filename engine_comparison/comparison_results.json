@@ -1,0 +1,1127 @@
+{
+  "positions": [
+    {
+      "position_id": 0,
+      "fen": "2kr1b1r/ppp2ppp/2n2n2/6Nq/6b1/7P/PPPPBPP1/RNBQ1RK1 b - - 2 9",
+      "stockfish_move": "g4e2",
+      "your_move": "g4e2",
+      "legal_move_count": 43,
+      "fullmove_number": 9,
+      "move_comparison": "exact_match",
+      "time_ratio": 135.76785756216685
+    },
+    {
+      "position_id": 1,
+      "fen": "r1bqk2r/ppp2pp1/3b1n2/3pn1Bp/4P2N/P7/1PP1BPPP/RN1QK2R b KQkq - 1 9",
+      "stockfish_move": "e5g4",
+      "your_move": "e5d3",
+      "legal_move_count": 42,
+      "fullmove_number": 9,
+      "move_comparison": "same_piece_different_target",
+      "time_ratio": 1897.9337795840306
+    },
+    {
+      "position_id": 2,
+      "fen": "rn2k2r/pp3ppp/8/3pb3/P3n2P/N3Pq2/1P1P1PP1/R1B1KB2 w Qkq - 0 15",
+      "stockfish_move": "g2f3",
+      "your_move": "g2f3",
+      "legal_move_count": 20,
+      "fullmove_number": 15,
+      "move_comparison": "exact_match",
+      "time_ratio": 1949.9373457527267
+    },
+    {
+      "position_id": 3,
+      "fen": "1r1qk1nr/1pp1bp2/p1p3p1/7p/3PP1b1/1Q3N2/PP1N1PPP/R1B1R1K1 b k - 7 11",
+      "stockfish_move": "g4e6",
+      "your_move": "b7b5",
+      "legal_move_count": 35,
+      "fullmove_number": 11,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2341.0569060333146
+    },
+    {
+      "position_id": 4,
+      "fen": "rn1qkb1r/pp3pp1/3pbn1p/1p6/4P3/2N2N2/PPP2PPP/R1BQK2R w KQkq - 0 10",
+      "stockfish_move": "e1g1",
+      "your_move": "e1g1",
+      "legal_move_count": 38,
+      "fullmove_number": 10,
+      "move_comparison": "exact_match",
+      "time_ratio": 3178.6582836710368
+    },
+    {
+      "position_id": 5,
+      "fen": "2k4r/ppp1nppp/2nrp2q/2PpPb2/5P2/4BN1P/PPP2KP1/RN1Q1B1R w - - 5 11",
+      "stockfish_move": "e5d6",
+      "your_move": "c5d6",
+      "legal_move_count": 42,
+      "fullmove_number": 11,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 2880.456757723965
+    },
+    {
+      "position_id": 6,
+      "fen": "rnbqk1nr/2pp1ppp/1p6/p3p3/4P3/BP3QP1/P1PP1P1P/RN2KBNR b KQkq - 0 5",
+      "stockfish_move": "d7d6",
+      "your_move": "d7d6",
+      "legal_move_count": 25,
+      "fullmove_number": 5,
+      "move_comparison": "exact_match",
+      "time_ratio": 3615.120658789832
+    },
+    {
+      "position_id": 7,
+      "fen": "r1b1k2r/p1p2pp1/p1p5/1n1q3p/1b2p2P/2P5/PP1P1PP1/R1BQ1RK1 b kq - 0 13",
+      "stockfish_move": "b4e7",
+      "your_move": "b4e7",
+      "legal_move_count": 48,
+      "fullmove_number": 13,
+      "move_comparison": "exact_match",
+      "time_ratio": 3142.3563836139974
+    },
+    {
+      "position_id": 8,
+      "fen": "r3kb1r/1p1b1p1p/4p3/p1Np2p1/3n4/q7/P1PK1PPP/3R1BNR w kq - 0 15",
+      "stockfish_move": "c5a6",
+      "your_move": "c5d7",
+      "legal_move_count": 29,
+      "fullmove_number": 15,
+      "move_comparison": "capture_decision_difference",
+      "time_ratio": 3351.460400763359
+    },
+    {
+      "position_id": 9,
+      "fen": "1rbq1rk1/ppp1npbp/6pn/3p4/3pPB2/1P3N2/P1PNQPPP/R3KB1R b KQ - 1 11",
+      "stockfish_move": "f8e8",
+      "your_move": "d5e4",
+      "legal_move_count": 29,
+      "fullmove_number": 11,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1440.5849503076195
+    },
+    {
+      "position_id": 10,
+      "fen": "r1bqkb1r/p1pp1ppp/2n5/1B2p3/4n3/1P3N2/P1PP1PPP/RNBQ1RK1 b kq - 1 6",
+      "stockfish_move": "d8f6",
+      "your_move": "f7f6",
+      "legal_move_count": 37,
+      "fullmove_number": 6,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2636.259024623476
+    },
+    {
+      "position_id": 11,
+      "fen": "rnbqkb1r/pp3p2/2pnp2p/8/N2P2pP/5N2/PPP1BPP1/R1BQK2R b KQkq - 1 10",
+      "stockfish_move": "g4f3",
+      "your_move": "g4f3",
+      "legal_move_count": 32,
+      "fullmove_number": 10,
+      "move_comparison": "exact_match",
+      "time_ratio": 2660.859124611337
+    },
+    {
+      "position_id": 12,
+      "fen": "rnbqkbnr/pp1p1pp1/4p2p/2pP4/4P3/3B4/PPP2PPP/RNBQK1NR b KQkq - 0 4",
+      "stockfish_move": "g8f6",
+      "your_move": "b7b6",
+      "legal_move_count": 28,
+      "fullmove_number": 4,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3093.814823670054
+    },
+    {
+      "position_id": 13,
+      "fen": "r1k2b1r/p1p2ppp/1p6/n2Pp3/8/3P3b/PPPN1PPP/1RBQK2R w K - 4 13",
+      "stockfish_move": "g2h3",
+      "your_move": "g2h3",
+      "legal_move_count": 28,
+      "fullmove_number": 13,
+      "move_comparison": "exact_match",
+      "time_ratio": 3689.3309489747257
+    },
+    {
+      "position_id": 14,
+      "fen": "rnb1k1nr/p1pp1p2/1pq5/4P1p1/4P3/3Q2P1/P1PB1P1P/b3K2R w Kkq - 0 14",
+      "stockfish_move": "d2g5",
+      "your_move": "e1g1",
+      "legal_move_count": 37,
+      "fullmove_number": 14,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2438.016098182977
+    },
+    {
+      "position_id": 15,
+      "fen": "r3kb1r/pppq1ppp/2n2n2/4p3/2BpP3/2P5/PP1N1P1P/R2QK2R w KQkq - 1 12",
+      "stockfish_move": "c4b5",
+      "your_move": "d1c1",
+      "legal_move_count": 38,
+      "fullmove_number": 12,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3494.5688319898845
+    },
+    {
+      "position_id": 16,
+      "fen": "r2qkbn1/ppp2ppr/2np4/4p2p/3PPPb1/2N2N2/PPP3PP/R1BQKB1R w KQq - 3 7",
+      "stockfish_move": "d4d5",
+      "your_move": "d4d5",
+      "legal_move_count": 36,
+      "fullmove_number": 7,
+      "move_comparison": "exact_match",
+      "time_ratio": 1095.9169791108732
+    },
+    {
+      "position_id": 17,
+      "fen": "r1bq1k1r/pp1n1ppp/2p2n2/3Pp3/3P2P1/N4P2/PPP1B2P/R1BQK1NR w KQ - 1 9",
+      "stockfish_move": "d5c6",
+      "your_move": "d5d6",
+      "legal_move_count": 31,
+      "fullmove_number": 9,
+      "move_comparison": "capture_decision_difference",
+      "time_ratio": 2265.5121922065505
+    },
+    {
+      "position_id": 18,
+      "fen": "rnbqkb1r/ppp2ppp/8/3pp3/4n3/P7/1PPP1PPP/RNBQKBNR w KQkq - 0 5",
+      "stockfish_move": "g1f3",
+      "your_move": "g1f3",
+      "legal_move_count": 28,
+      "fullmove_number": 5,
+      "move_comparison": "exact_match",
+      "time_ratio": 5470.423462088698
+    },
+    {
+      "position_id": 19,
+      "fen": "rnbqkb1r/ppp2p1p/8/3pp1p1/4N3/1P3N2/P1PPQPPP/R1B1KB1R b KQkq - 0 6",
+      "stockfish_move": "d5e4",
+      "your_move": "d5e4",
+      "legal_move_count": 35,
+      "fullmove_number": 6,
+      "move_comparison": "exact_match",
+      "time_ratio": 2054.036089866157
+    },
+    {
+      "position_id": 20,
+      "fen": "r1b1k2r/ppppqp1p/1bn2n2/4p1p1/1PB1P2P/2P2N2/P2P1PP1/RNBQ1RK1 w kq - 0 9",
+      "stockfish_move": "h4g5",
+      "your_move": "f3g5",
+      "legal_move_count": 33,
+      "fullmove_number": 9,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2070.8128086665606
+    },
+    {
+      "position_id": 21,
+      "fen": "1rbqk1nr/p4ppp/n2b4/1p1P4/3p3P/4B3/PPP2PP1/RN1Q1RK1 w k - 0 11",
+      "stockfish_move": "e3d4",
+      "your_move": "d1d4",
+      "legal_move_count": 31,
+      "fullmove_number": 11,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2915.9795674513084
+    },
+    {
+      "position_id": 22,
+      "fen": "rnb1kbnr/ppppqpp1/7p/4N3/4P3/8/PPPP1PPP/RNBQKB1R w KQkq - 1 4",
+      "stockfish_move": "d2d4",
+      "your_move": "d1h5",
+      "legal_move_count": 35,
+      "fullmove_number": 4,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1660.2041271611824
+    },
+    {
+      "position_id": 23,
+      "fen": "r2q1rk1/ppp1bppp/4b3/3p4/B1PPn3/8/PP3PPP/RNBQ2K1 w - - 1 12",
+      "stockfish_move": "c4d5",
+      "your_move": "d1f3",
+      "legal_move_count": 37,
+      "fullmove_number": 12,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 5566.472527472528
+    },
+    {
+      "position_id": 24,
+      "fen": "2kr1bnr/pppq1ppp/2n5/6P1/4N1b1/3PK3/PPP3BP/R2Q2NR b - - 0 11",
+      "stockfish_move": "c8b8",
+      "your_move": "d7d4",
+      "legal_move_count": 40,
+      "fullmove_number": 11,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 900.4051858047557
+    },
+    {
+      "position_id": 25,
+      "fen": "r1b1kb1r/pp1p1ppp/2p2n2/4p3/P3P2q/2NP1n2/1PP1BPPP/R1BQK2R w KQkq - 1 8",
+      "stockfish_move": "e2f3",
+      "your_move": "e2f3",
+      "legal_move_count": 3,
+      "fullmove_number": 8,
+      "move_comparison": "exact_match",
+      "time_ratio": 147.95504336782946
+    },
+    {
+      "position_id": 26,
+      "fen": "r3k2r/pppqb1pp/2p5/2B1Rp2/2P5/1P1P3P/1P3P2/RN4K1 b kq - 0 15",
+      "stockfish_move": "e8c8",
+      "your_move": "d7d3",
+      "legal_move_count": 26,
+      "fullmove_number": 15,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1714.506992589051
+    },
+    {
+      "position_id": 27,
+      "fen": "rnbqkb1r/ppp2pp1/7p/3pn3/P6P/2P3P1/1PQ1PP2/RNB1KBNR b KQkq - 1 7",
+      "stockfish_move": "d8f6",
+      "your_move": "b7b6",
+      "legal_move_count": 42,
+      "fullmove_number": 7,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1689.7756762253407
+    },
+    {
+      "position_id": 28,
+      "fen": "rnbq1knr/pppp2bp/8/6p1/2BPp3/2N5/PPPK1PPP/R1BQ3R b - - 1 9",
+      "stockfish_move": "d7d5",
+      "your_move": "d7d5",
+      "legal_move_count": 26,
+      "fullmove_number": 9,
+      "move_comparison": "exact_match",
+      "time_ratio": 1603.5302097651347
+    },
+    {
+      "position_id": 29,
+      "fen": "rnbqkb1r/ppp2ppp/5n2/3pp3/P7/2N4N/1PPPPPPP/R1BQKB1R b KQkq - 3 4",
+      "stockfish_move": "b8c6",
+      "your_move": "c8h3",
+      "legal_move_count": 36,
+      "fullmove_number": 4,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1366.7175973870787
+    },
+    {
+      "position_id": 30,
+      "fen": "rnbqkbnB/pp1pp2p/2p2pp1/8/8/1P2P3/P1PP1PPP/RN1QKBNR b KQq - 0 4",
+      "stockfish_move": "d7d5",
+      "your_move": "b7b5",
+      "legal_move_count": 21,
+      "fullmove_number": 4,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 2986.602007888132
+    },
+    {
+      "position_id": 31,
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2P5/3P4/PPN1PPPP/R1BQKBNR b KQkq - 2 4",
+      "stockfish_move": "d7d5",
+      "your_move": "b7b6",
+      "legal_move_count": 30,
+      "fullmove_number": 4,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 2076.9399251055693
+    },
+    {
+      "position_id": 32,
+      "fen": "rn1qk2r/p2p1pbp/4p1p1/7n/1QPP4/2N5/PP2NP1P/R1B1K2b w Qkq - 2 13",
+      "stockfish_move": "c3b5",
+      "your_move": "e1f1",
+      "legal_move_count": 39,
+      "fullmove_number": 13,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2506.8726319552006
+    },
+    {
+      "position_id": 33,
+      "fen": "rn2kb1r/ppp2pp1/3p3p/6Nn/3Pq1b1/4B3/PPP1BPPP/RN1QK2R w KQkq - 6 9",
+      "stockfish_move": "g5e4",
+      "your_move": "g5e4",
+      "legal_move_count": 39,
+      "fullmove_number": 9,
+      "move_comparison": "exact_match",
+      "time_ratio": 3265.375642404685
+    },
+    {
+      "position_id": 34,
+      "fen": "rnb1k2r/ppp2ppp/5q1n/3pP3/1b1P4/5N2/PPP1KPPP/RNBQ1B1R b kq - 0 7",
+      "stockfish_move": "f6a6",
+      "your_move": "f6a6",
+      "legal_move_count": 49,
+      "fullmove_number": 7,
+      "move_comparison": "exact_match",
+      "time_ratio": 1475.78074490513
+    },
+    {
+      "position_id": 35,
+      "fen": "rnbqkb1r/pppp1ppp/5n2/4p3/2P5/2N2N2/PP1PPPPP/R1BQKB1R b KQkq - 3 3",
+      "stockfish_move": "b8c6",
+      "your_move": "b8c6",
+      "legal_move_count": 28,
+      "fullmove_number": 3,
+      "move_comparison": "exact_match",
+      "time_ratio": 1.0001195457262402
+    },
+    {
+      "position_id": 36,
+      "fen": "rnbqkbnr/p1p1pppp/8/3p4/3P3P/2P5/P1PKPPP1/R1BQ1BNR b kq - 0 5",
+      "stockfish_move": "c7c5",
+      "your_move": "c7c5",
+      "legal_move_count": 27,
+      "fullmove_number": 5,
+      "move_comparison": "exact_match",
+      "time_ratio": 3516.722795869738
+    },
+    {
+      "position_id": 37,
+      "fen": "rnbqk2r/pp1pbppp/2p1pn2/8/3P4/5P2/PPPQ2PP/RNBK1BNR w kq - 2 7",
+      "stockfish_move": "d2g5",
+      "your_move": "b1c3",
+      "legal_move_count": 34,
+      "fullmove_number": 7,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3737.3401019270586
+    },
+    {
+      "position_id": 38,
+      "fen": "r1bqkbnr/1ppp1p1p/p1n3p1/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
+      "stockfish_move": "c2c3",
+      "your_move": "c2c3",
+      "legal_move_count": 27,
+      "fullmove_number": 5,
+      "move_comparison": "exact_match",
+      "time_ratio": 0.24986556730596882
+    },
+    {
+      "position_id": 39,
+      "fen": "rnb1kbnr/pppp1ppp/8/4q3/8/7N/PPP1PPPP/RNBQKB1R w KQkq - 0 4",
+      "stockfish_move": "b1c3",
+      "your_move": "b1c3",
+      "legal_move_count": 31,
+      "fullmove_number": 4,
+      "move_comparison": "exact_match",
+      "time_ratio": 2384.741855591541
+    },
+    {
+      "position_id": 40,
+      "fen": "r1bqk1nr/pppp1p1p/2n5/2P1p3/4P1p1/5N1P/PPP2PP1/RNBQKBR1 b Qkq - 0 6",
+      "stockfish_move": "g4f3",
+      "your_move": "g4f3",
+      "legal_move_count": 28,
+      "fullmove_number": 6,
+      "move_comparison": "exact_match",
+      "time_ratio": 2324.4936684756735
+    },
+    {
+      "position_id": 41,
+      "fen": "rnbqkb1r/pppppppp/8/3n4/3PP3/1P6/P1P2PPP/RNBQKBNR b KQkq - 0 3",
+      "stockfish_move": "d5b6",
+      "your_move": "d5b4",
+      "legal_move_count": 24,
+      "fullmove_number": 3,
+      "move_comparison": "same_piece_different_target",
+      "time_ratio": 3821.863317210173
+    },
+    {
+      "position_id": 42,
+      "fen": "rnbqkb1r/ppp2ppp/8/3n4/4p3/5N1P/PPPP1PP1/RNBQKBR1 w Qkq - 0 6",
+      "stockfish_move": "f3d4",
+      "your_move": "f1b5",
+      "legal_move_count": 26,
+      "fullmove_number": 6,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2173.920326467159
+    },
+    {
+      "position_id": 43,
+      "fen": "rn2kbnr/ppp1qbpp/3p4/4pP2/PP6/8/1BPP1PPP/RN1QK1NR b KQkq - 0 8",
+      "stockfish_move": "b8c6",
+      "your_move": "a7a5",
+      "legal_move_count": 32,
+      "fullmove_number": 8,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2173.84485645933
+    },
+    {
+      "position_id": 44,
+      "fen": "rnb2k1r/pppqbpp1/5n2/3pN2p/8/1PNB3P/PBPPQPP1/R3K1R1 w Q - 4 12",
+      "stockfish_move": "e5d7",
+      "your_move": "e5d7",
+      "legal_move_count": 45,
+      "fullmove_number": 12,
+      "move_comparison": "exact_match",
+      "time_ratio": 3657.3415421398686
+    },
+    {
+      "position_id": 45,
+      "fen": "r1b1kr2/ppp2p1p/2n3p1/4P3/8/1B6/PPP1KPPP/RN5R b q - 2 11",
+      "stockfish_move": "c8d7",
+      "your_move": "c6e5",
+      "legal_move_count": 27,
+      "fullmove_number": 11,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1366.014406121107
+    },
+    {
+      "position_id": 46,
+      "fen": "r3k1nr/p1pq1ppp/bpnbp2P/3p4/3P1B2/5N2/PPPNPPP1/R2QKB1R b KQkq - 0 8",
+      "stockfish_move": "g7g6",
+      "your_move": "d6f4",
+      "legal_move_count": 40,
+      "fullmove_number": 8,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1316.6236559139784
+    },
+    {
+      "position_id": 47,
+      "fen": "r1bqkb1r/pppp1ppp/2n5/1B2p3/4n3/5N2/PPPP1PPP/RNBQ1RK1 w kq - 0 5",
+      "stockfish_move": "f1e1",
+      "your_move": "f1e1",
+      "legal_move_count": 29,
+      "fullmove_number": 5,
+      "move_comparison": "exact_match",
+      "time_ratio": 1.9902380952380951
+    },
+    {
+      "position_id": 48,
+      "fen": "r2qkb1r/p1p2ppp/2p2n2/4p3/4P3/5N1P/PPPBQP1P/R3KR2 b Qkq - 0 10",
+      "stockfish_move": "d8b8",
+      "your_move": "a8b8",
+      "legal_move_count": 32,
+      "fullmove_number": 10,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3299.0757648183558
+    },
+    {
+      "position_id": 49,
+      "fen": "r1bq1k2/pp4pr/3pp2n/1P3p2/8/3P1N2/P1n1KPPP/RNB4R b - - 0 15",
+      "stockfish_move": "c2a1",
+      "your_move": "c2a1",
+      "legal_move_count": 33,
+      "fullmove_number": 15,
+      "move_comparison": "exact_match",
+      "time_ratio": 1959.295345871852
+    },
+    {
+      "position_id": 50,
+      "fen": "r1bqkb1r/ppp1pppp/8/3nn3/4Q3/8/PPPP1PPP/RNB1KB1R w KQkq - 0 7",
+      "stockfish_move": "e4e5",
+      "your_move": "e4e5",
+      "legal_move_count": 40,
+      "fullmove_number": 7,
+      "move_comparison": "exact_match",
+      "time_ratio": 375.62355045808437
+    },
+    {
+      "position_id": 51,
+      "fen": "r3kb1r/pppN1ppp/2n2q1n/8/3pP3/2P5/PP1N1PPP/R1B1KB1R b KQkq - 0 9",
+      "stockfish_move": "e8d7",
+      "your_move": "e8d7",
+      "legal_move_count": 42,
+      "fullmove_number": 9,
+      "move_comparison": "exact_match",
+      "time_ratio": 1657.2922246652008
+    },
+    {
+      "position_id": 52,
+      "fen": "rnbqk2r/pppp1ppp/5n2/2b1p3/4P2P/2N5/PPPP1PP1/R1BQKBNR w KQkq - 3 4",
+      "stockfish_move": "d2d3",
+      "your_move": "g1f3",
+      "legal_move_count": 32,
+      "fullmove_number": 4,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2215.160037878788
+    },
+    {
+      "position_id": 53,
+      "fen": "r3kbnr/1p1b1p1p/2n1pp2/1N1pP3/p2p4/2P2N2/PP3PPP/R2Q1RK1 b kq - 0 12",
+      "stockfish_move": "a8a5",
+      "your_move": "d4c3",
+      "legal_move_count": 34,
+      "fullmove_number": 12,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2082.890531393449
+    },
+    {
+      "position_id": 54,
+      "fen": "r1bqk2r/ppp2ppp/2n2n2/2bpp1N1/4P3/3P4/PPPN1PPP/R1BQKB1R w KQkq - 5 6",
+      "stockfish_move": "f1e2",
+      "your_move": "d2b3",
+      "legal_move_count": 31,
+      "fullmove_number": 6,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1501.9648357639362
+    },
+    {
+      "position_id": 55,
+      "fen": "rnbqkb1r/ppp2ppp/4pn2/3p4/3PP3/2N5/PPP2PPP/R1BQKBNR w KQkq - 2 4",
+      "stockfish_move": "e4e5",
+      "your_move": "f2f3",
+      "legal_move_count": 39,
+      "fullmove_number": 4,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 0.6672247468707646
+    },
+    {
+      "position_id": 56,
+      "fen": "rnb1kb1r/pppp1p2/6p1/8/P2pP3/8/1PP1NP1P/R1B1KBq1 w Qkq - 2 14",
+      "stockfish_move": "e2g1",
+      "your_move": "e2g1",
+      "legal_move_count": 25,
+      "fullmove_number": 14,
+      "move_comparison": "exact_match",
+      "time_ratio": 3056.242764388687
+    },
+    {
+      "position_id": 57,
+      "fen": "r3k2r/p1p2ppp/b1n5/3nP3/P1N5/4BN2/1PP2PPP/R3K2R b KQkq - 0 11",
+      "stockfish_move": "a6c4",
+      "your_move": "a6c4",
+      "legal_move_count": 35,
+      "fullmove_number": 11,
+      "move_comparison": "exact_match",
+      "time_ratio": 2330.9255946717412
+    },
+    {
+      "position_id": 58,
+      "fen": "rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/2N5/PPP2PPP/R1BQKBNR b KQkq - 1 3",
+      "stockfish_move": "d5e4",
+      "your_move": "h7h6",
+      "legal_move_count": 34,
+      "fullmove_number": 3,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 0.9735492892099744
+    },
+    {
+      "position_id": 59,
+      "fen": "r3kb1r/pppq2p1/2n1bp2/3np2p/7P/2NP1NP1/PP2PPB1/R1BQK2R b KQkq - 2 10",
+      "stockfish_move": "e8c8",
+      "your_move": "d5c3",
+      "legal_move_count": 45,
+      "fullmove_number": 10,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2160.1018042776914
+    },
+    {
+      "position_id": 60,
+      "fen": "r1bq1rk1/pp3ppp/2p2b2/3p1n2/8/P1N5/1PPP1PPP/1RBQRBK1 w - - 0 13",
+      "stockfish_move": "c3e2",
+      "your_move": "d1f3",
+      "legal_move_count": 35,
+      "fullmove_number": 13,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2574.283427163969
+    },
+    {
+      "position_id": 61,
+      "fen": "r1bq1rk1/ppp2pp1/8/6p1/1bP1p1Q1/P1n4P/1PP2PP1/R3K1NR b KQ - 1 15",
+      "stockfish_move": "c3b5",
+      "your_move": "c8g4",
+      "legal_move_count": 40,
+      "fullmove_number": 15,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1787.8867489056904
+    },
+    {
+      "position_id": 62,
+      "fen": "r3k2r/1pp1qp2/p5p1/3Pbb2/1P2n3/4B3/PP2KPPP/RNQ2B1R w kq - 2 15",
+      "stockfish_move": "e2e1",
+      "your_move": "f2f3",
+      "legal_move_count": 36,
+      "fullmove_number": 15,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1779.191538522827
+    },
+    {
+      "position_id": 63,
+      "fen": "r1b1qrk1/ppp2ppp/2Pb1n2/4p3/8/3B2Q1/PPPPNPPP/R1BNK2R w KQ - 3 11",
+      "stockfish_move": "d3b5",
+      "your_move": "c6b7",
+      "legal_move_count": 39,
+      "fullmove_number": 11,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3585.418899521531
+    },
+    {
+      "position_id": 64,
+      "fen": "r1bq1rk1/ppp2ppp/2pn4/4Q3/8/P4N2/P1PP1PPP/R1B2RK1 b - - 0 9",
+      "stockfish_move": "f8e8",
+      "your_move": "b7b5",
+      "legal_move_count": 30,
+      "fullmove_number": 9,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3029.5003580806874
+    },
+    {
+      "position_id": 65,
+      "fen": "rnbqkbnr/ppp1pp1p/3p2p1/8/3PP3/2N5/PPP2PPP/R1BQKBNR b KQkq - 1 3",
+      "stockfish_move": "g8f6",
+      "your_move": "c7c6",
+      "legal_move_count": 28,
+      "fullmove_number": 3,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 0.28982843137254904
+    },
+    {
+      "position_id": 66,
+      "fen": "rn1qkb1r/pp2pppp/2p1b3/3P4/3Pn3/2N1PN2/PP3PPP/R1BQKB1R b KQkq - 0 6",
+      "stockfish_move": "e4c3",
+      "your_move": "e4c3",
+      "legal_move_count": 37,
+      "fullmove_number": 6,
+      "move_comparison": "exact_match",
+      "time_ratio": 3484.4482305117167
+    },
+    {
+      "position_id": 67,
+      "fen": "r1bk1br1/n1pp1ppp/p1n5/1P1NN3/8/8/PP3PPP/R1BQ1RK1 b - - 0 15",
+      "stockfish_move": "c6e5",
+      "your_move": "c6e5",
+      "legal_move_count": 25,
+      "fullmove_number": 15,
+      "move_comparison": "exact_match",
+      "time_ratio": 2043.1543656248132
+    },
+    {
+      "position_id": 68,
+      "fen": "r1b1kbnr/pppp1ppp/8/4p3/3nP2q/2N5/PPPP1PPP/R1BQKB1R w KQkq - 2 5",
+      "stockfish_move": "f1e2",
+      "your_move": "f1c4",
+      "legal_move_count": 24,
+      "fullmove_number": 5,
+      "move_comparison": "same_piece_different_target",
+      "time_ratio": 2546.45535927429
+    },
+    {
+      "position_id": 69,
+      "fen": "r1bqkbnr/1ppp1ppp/p1n5/4p3/B3P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 4",
+      "stockfish_move": "d7d6",
+      "your_move": "f8e7",
+      "legal_move_count": 32,
+      "fullmove_number": 4,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 0.4988670244484198
+    },
+    {
+      "position_id": 70,
+      "fen": "r1b1k1nr/pppq1ppp/n3p3/8/3P1b2/PP3Q2/2P2PPP/RN2KB1R w KQkq - 0 9",
+      "stockfish_move": "f1a6",
+      "your_move": "f3f4",
+      "legal_move_count": 34,
+      "fullmove_number": 9,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3168.2549300824667
+    },
+    {
+      "position_id": 71,
+      "fen": "rnb1k1nr/ppp1ppbp/3q4/6p1/3P4/P1N1B3/1PP2PPP/R2QKBNR b KQkq - 3 6",
+      "stockfish_move": "g8f6",
+      "your_move": "e8f8",
+      "legal_move_count": 49,
+      "fullmove_number": 6,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1506.8594817671335
+    },
+    {
+      "position_id": 72,
+      "fen": "rnbqk1nr/ppp2pp1/3p4/2b1p2p/2PPP3/4BN2/PP3PPP/RN1QKB1R w KQkq - 0 7",
+      "stockfish_move": "d4c5",
+      "your_move": "d4c5",
+      "legal_move_count": 36,
+      "fullmove_number": 7,
+      "move_comparison": "exact_match",
+      "time_ratio": 3018.8453637660486
+    },
+    {
+      "position_id": 73,
+      "fen": "r1bkr3/pp1pn1bp/8/1pq1N3/3PR3/P7/1PP2PPP/RNB3K1 w - - 1 14",
+      "stockfish_move": "e5f7",
+      "your_move": "d4c5",
+      "legal_move_count": 37,
+      "fullmove_number": 14,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 5502.508333333333
+    },
+    {
+      "position_id": 74,
+      "fen": "r1b1kbnr/ppp2ppp/2n5/3qp2Q/8/2P5/PP1P1PPP/RNB1KBNR w KQkq - 2 5",
+      "stockfish_move": "h5f3",
+      "your_move": "g1f3",
+      "legal_move_count": 37,
+      "fullmove_number": 5,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1764.0630874621634
+    },
+    {
+      "position_id": 75,
+      "fen": "r1bqkbnr/ppp2ppp/2np4/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
+      "stockfish_move": "d2d4",
+      "your_move": "d2d4",
+      "legal_move_count": 32,
+      "fullmove_number": 4,
+      "move_comparison": "exact_match",
+      "time_ratio": 0.0524875918454424
+    },
+    {
+      "position_id": 76,
+      "fen": "r1bqkbnr/1pp2ppp/p1np4/8/3P4/2N2P2/PPP3PP/R1BQKBNR w KQkq - 0 6",
+      "stockfish_move": "c1e3",
+      "your_move": "c1f4",
+      "legal_move_count": 35,
+      "fullmove_number": 6,
+      "move_comparison": "same_piece_different_target",
+      "time_ratio": 3621.3123205741626
+    },
+    {
+      "position_id": 77,
+      "fen": "rnbqk1nr/pppp2pp/5p2/2b1p3/4P3/2P3P1/PP1P1PBP/RNBQK1NR b KQkq - 0 4",
+      "stockfish_move": "d7d6",
+      "your_move": "a7a5",
+      "legal_move_count": 29,
+      "fullmove_number": 4,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 1974.648282457958
+    },
+    {
+      "position_id": 78,
+      "fen": "r4kN1/ppp2p1r/3bB3/3Np2p/3n2P1/8/PPPP2PP/R1BQK2R b KQ - 2 15",
+      "stockfish_move": "f7e6",
+      "your_move": "d4e6",
+      "legal_move_count": 34,
+      "fullmove_number": 15,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1398.53762027132
+    },
+    {
+      "position_id": 79,
+      "fen": "r1b2b1r/p1pq1k2/2p2p2/3pp1pp/8/5N2/PPPPNPPP/R1BQ1RK1 w - - 2 13",
+      "stockfish_move": "d2d4",
+      "your_move": "g1h1",
+      "legal_move_count": 25,
+      "fullmove_number": 13,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1647.1231982594506
+    },
+    {
+      "position_id": 80,
+      "fen": "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4",
+      "stockfish_move": "f8c5",
+      "your_move": "f6e4",
+      "legal_move_count": 28,
+      "fullmove_number": 4,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 0.6614191915196582
+    },
+    {
+      "position_id": 81,
+      "fen": "rnbqkbnr/ppppp2p/B7/5Pp1/8/8/PPPP1PPP/RNBQK1NR b KQkq - 1 3",
+      "stockfish_move": "g8f6",
+      "your_move": "b8a6",
+      "legal_move_count": 19,
+      "fullmove_number": 3,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 1422.1554705554227
+    },
+    {
+      "position_id": 82,
+      "fen": "r1b2k1r/ppp3pp/2np1n2/2b1p3/2P1P2q/1QN5/PP1P1PPP/R1B2RK1 b - - 1 10",
+      "stockfish_move": "c6d4",
+      "your_move": "f6e4",
+      "legal_move_count": 49,
+      "fullmove_number": 10,
+      "move_comparison": "same_piece_type_different_location",
+      "time_ratio": 1945.1990078229346
+    },
+    {
+      "position_id": 83,
+      "fen": "rnbqkb1r/ppp2ppp/5n2/8/2NpP3/8/PPP1PPPP/R1BQKBNR b KQkq - 0 6",
+      "stockfish_move": "c8e6",
+      "your_move": "f6e4",
+      "legal_move_count": 37,
+      "fullmove_number": 6,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1816.4662894485177
+    },
+    {
+      "position_id": 84,
+      "fen": "r3kb1r/ppp2ppp/2n5/P3p3/6b1/5N2/1PPPKPnP/R1BQ1R2 w kq - 2 15",
+      "stockfish_move": "a1a4",
+      "your_move": "a1a4",
+      "legal_move_count": 18,
+      "fullmove_number": 15,
+      "move_comparison": "exact_match",
+      "time_ratio": 2805.4635310970516
+    },
+    {
+      "position_id": 85,
+      "fen": "r1bqr1k1/pppp1pbp/2n2np1/4N3/3PP3/2N5/PPP1BPPP/R1BQK2R b KQ - 6 8",
+      "stockfish_move": "c6e5",
+      "your_move": "c6e5",
+      "legal_move_count": 30,
+      "fullmove_number": 8,
+      "move_comparison": "exact_match",
+      "time_ratio": 2101.836391148099
+    },
+    {
+      "position_id": 86,
+      "fen": "rnbqkbnr/2p2pp1/p2pp3/7p/N1pPP3/5N2/PPP2PPP/R1BQK2R b KQkq - 1 8",
+      "stockfish_move": "c8b7",
+      "your_move": "g7g6",
+      "legal_move_count": 29,
+      "fullmove_number": 8,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2261.4346613545817
+    },
+    {
+      "position_id": 87,
+      "fen": "rn2n1kr/pppqb1pp/8/3pP2Q/3P2bP/2P3P1/PP1N1P1R/R1B1KB2 b Q - 2 13",
+      "stockfish_move": "g4h5",
+      "your_move": "g4h5",
+      "legal_move_count": 38,
+      "fullmove_number": 13,
+      "move_comparison": "exact_match",
+      "time_ratio": 1921.5568824138206
+    },
+    {
+      "position_id": 88,
+      "fen": "r2q1bnr/pppk1ppp/2n1p3/8/Q2P1P2/2P4P/PP1P1P2/RNB1KB1R b KQ - 0 8",
+      "stockfish_move": "a7a6",
+      "your_move": "a7a6",
+      "legal_move_count": 32,
+      "fullmove_number": 8,
+      "move_comparison": "exact_match",
+      "time_ratio": 2572.389953293299
+    },
+    {
+      "position_id": 89,
+      "fen": "rnbqr1k1/ppp2ppp/5n2/3p4/2BpPP2/1P3P2/P1PP3P/RNBQ1RK1 b - - 0 9",
+      "stockfish_move": "d5c4",
+      "your_move": "d5c4",
+      "legal_move_count": 35,
+      "fullmove_number": 9,
+      "move_comparison": "exact_match",
+      "time_ratio": 3005.034074605452
+    },
+    {
+      "position_id": 90,
+      "fen": "rn1qk1nr/pp1bbpp1/7p/1BPp4/8/2P2N2/PP2QPPP/RNB1K2R b KQkq - 0 8",
+      "stockfish_move": "g8f6",
+      "your_move": "e8f8",
+      "legal_move_count": 20,
+      "fullmove_number": 8,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 3689.800854160076
+    },
+    {
+      "position_id": 91,
+      "fen": "r2qkb1r/ppp2ppp/2bp1n2/4p3/3PP3/5N2/PPP2PPP/RNBQKR2 w Qkq - 0 7",
+      "stockfish_move": "c1g5",
+      "your_move": "d4d5",
+      "legal_move_count": 32,
+      "fullmove_number": 7,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1772.0034262948207
+    },
+    {
+      "position_id": 92,
+      "fen": "r1b1k2r/pppp1pbp/2Pn3p/4p3/7q/5N2/PPP2PPP/RN3RK1 w kq - 0 11",
+      "stockfish_move": "f3h4",
+      "your_move": "f3h4",
+      "legal_move_count": 24,
+      "fullmove_number": 11,
+      "move_comparison": "exact_match",
+      "time_ratio": 1233.9229523809524
+    },
+    {
+      "position_id": 93,
+      "fen": "r1b1kb1r/p1p2ppp/1pn5/3np3/P7/3B4/1PPP1PQP/RNB1K1NR b KQkq - 0 9",
+      "stockfish_move": "d5b4",
+      "your_move": "d5b4",
+      "legal_move_count": 39,
+      "fullmove_number": 9,
+      "move_comparison": "exact_match",
+      "time_ratio": 6668.053409632808
+    },
+    {
+      "position_id": 94,
+      "fen": "1rbqkr2/p1pnp1bp/6p1/3P2P1/1P1P4/2N1nN2/P1P1B1PP/1R2QRK1 b - - 2 15",
+      "stockfish_move": "a7a6",
+      "your_move": "e3c2",
+      "legal_move_count": 40,
+      "fullmove_number": 15,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2419.6311553784863
+    },
+    {
+      "position_id": 95,
+      "fen": "r1bq2k1/p1pp1ppp/2n5/2p1Q3/1nP5/5N2/PP3PPP/RN2KBR1 b Q - 0 13",
+      "stockfish_move": "c6e5",
+      "your_move": "c6e5",
+      "legal_move_count": 31,
+      "fullmove_number": 13,
+      "move_comparison": "exact_match",
+      "time_ratio": 3138.9236285406955
+    },
+    {
+      "position_id": 96,
+      "fen": "rn1qk1r1/1p3p2/p2b3p/2p2b1n/3BPp2/2NB1NPP/PPP5/R3K2R w KQq - 0 14",
+      "stockfish_move": "e1c1",
+      "your_move": "e4f5",
+      "legal_move_count": 47,
+      "fullmove_number": 14,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2373.605546258666
+    },
+    {
+      "position_id": 97,
+      "fen": "2rqkb1r/pp3ppp/2p1bn2/4p3/7N/P1Pn2P1/1P1NKPBP/R1B4R b k - 1 15",
+      "stockfish_move": "e6g4",
+      "your_move": "g7g6",
+      "legal_move_count": 50,
+      "fullmove_number": 15,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2750.2109038737444
+    },
+    {
+      "position_id": 98,
+      "fen": "rnbqkb1r/ppppppp1/7p/4P3/4n3/8/PPPPNPPP/RNBQKB1R w KQkq - 0 4",
+      "stockfish_move": "c2c3",
+      "your_move": "b1c3",
+      "legal_move_count": 23,
+      "fullmove_number": 4,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 1378.0605807145419
+    },
+    {
+      "position_id": 99,
+      "fen": "2r2rk1/p2n1ppp/b1pbp3/qp6/3Pn1P1/1B1QPN1P/PP3P2/R1B2K1R b - - 2 15",
+      "stockfish_move": "b5b4",
+      "your_move": "e4f2",
+      "legal_move_count": 50,
+      "fullmove_number": 15,
+      "move_comparison": "different_piece_move",
+      "time_ratio": 2319.1847661540914
+    }
+  ],
+  "summary": {
+    "total_positions": 100,
+    "move_comparison": {
+      "exact_match": 38,
+      "same_piece_different_target": 4,
+      "different_piece_move": 48,
+      "same_piece_type_different_location": 8,
+      "capture_decision_difference": 2
+    },
+    "exact_match_percentage": 38.0,
+    "average_time_ratio": 2239.252891978309
+  },
+  "detailed_analysis": [
+    {
+      "fen": "r1bqk2r/ppp2pp1/3b1n2/3pn1Bp/4P2N/P7/1PP1BPPP/RN1QK2R b KQkq - 1 9",
+      "stockfish_move": "e5g4",
+      "your_move": "e5d3",
+      "analysis": {
+        "eval_diff": 0,
+        "insights": [
+          "Analysis unavailable due to error"
+        ]
+      },
+      "fullmove_number": 9
+    },
+    {
+      "fen": "1r1qk1nr/1pp1bp2/p1p3p1/7p/3PP1b1/1Q3N2/PP1N1PPP/R1B1R1K1 b k - 7 11",
+      "stockfish_move": "g4e6",
+      "your_move": "b7b5",
+      "analysis": {
+        "eval_diff": 0,
+        "insights": [
+          "Analysis unavailable due to error"
+        ]
+      },
+      "fullmove_number": 11
+    },
+    {
+      "fen": "2k4r/ppp1nppp/2nrp2q/2PpPb2/5P2/4BN1P/PPP2KP1/RN1Q1B1R w - - 5 11",
+      "stockfish_move": "e5d6",
+      "your_move": "c5d6",
+      "analysis": {
+        "eval_diff": 0,
+        "insights": [
+          "Analysis unavailable due to error"
+        ]
+      },
+      "fullmove_number": 11
+    },
+    {
+      "fen": "r3kb1r/1p1b1p1p/4p3/p1Np2p1/3n4/q7/P1PK1PPP/3R1BNR w kq - 0 15",
+      "stockfish_move": "c5a6",
+      "your_move": "c5d7",
+      "analysis": {
+        "eval_diff": 0,
+        "insights": [
+          "Analysis unavailable due to error"
+        ]
+      },
+      "fullmove_number": 15
+    },
+    {
+      "fen": "1rbq1rk1/ppp1npbp/6pn/3p4/3pPB2/1P3N2/P1PNQPPP/R3KB1R b KQ - 1 11",
+      "stockfish_move": "f8e8",
+      "your_move": "d5e4",
+      "analysis": {
+        "eval_diff": 0,
+        "insights": [
+          "Analysis unavailable due to error"
+        ]
+      },
+      "fullmove_number": 11
+    }
+  ],
+  "move_patterns": {
+    "opening_patterns": {
+      "exact_match": 26,
+      "same_piece_different_target": 4,
+      "different_piece_move": 26,
+      "capture_decision_difference": 1,
+      "same_piece_type_different_location": 7
+    },
+    "middlegame_patterns": {
+      "exact_match": 12,
+      "different_piece_move": 22,
+      "same_piece_type_different_location": 1,
+      "capture_decision_difference": 1
+    },
+    "endgame_patterns": {},
+    "material_imbalance": {
+      "exact_match_equal": 18,
+      "same_piece_different_target_equal": 3,
+      "exact_match_black_advantage": 11,
+      "different_piece_move_equal": 28,
+      "same_piece_type_different_location_white_advantage": 2,
+      "exact_match_white_advantage": 9,
+      "capture_decision_difference_black_advantage": 1,
+      "different_piece_move_black_advantage": 15,
+      "capture_decision_difference_white_advantage": 1,
+      "same_piece_type_different_location_equal": 5,
+      "different_piece_move_white_advantage": 5,
+      "same_piece_different_target_black_advantage": 1,
+      "same_piece_type_different_location_black_advantage": 1
+    },
+    "piece_preference": {
+      "your_engine": {
+        "bishop": 12,
+        "knight": 31,
+        "pawn": 37,
+        "king": 7,
+        "queen": 10,
+        "rook": 3
+      },
+      "stockfish": {
+        "bishop": 20,
+        "knight": 29,
+        "pawn": 32,
+        "king": 7,
+        "rook": 5,
+        "queen": 7
+      }
+    }
+  }
+}

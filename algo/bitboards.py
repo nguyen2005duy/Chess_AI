@@ -37,7 +37,7 @@ def initialize_bitboards(board: chess.Board):
     global BLACK_PAWNS, BLACK_KNIGHTS, BLACK_BISHOPS, BLACK_ROOKS, BLACK_QUEENS, BLACK_KINGS
     global WHITE_PIECES, BLACK_PIECES, ALL_PIECES
     global SIDE_TO_MOVE, CASTLING_RIGHTS, EN_PASSANT_SQUARE, HALF_MOVE_COUNTER, FULL_MOVE_COUNTER
-    global BITBOARDS, OCCUPATIONS
+
     # Use correct python-chess accessors
     white_occupied = board.occupied_co[chess.WHITE]
     black_occupied = board.occupied_co[chess.BLACK]
@@ -59,21 +59,6 @@ def initialize_bitboards(board: chess.Board):
     WHITE_PIECES = white_occupied
     BLACK_PIECES = black_occupied
     ALL_PIECES = board.occupied
-    BITBOARDS[0] = WHITE_PAWNS
-    BITBOARDS[1] = WHITE_KNIGHTS
-    BITBOARDS[2] = WHITE_BISHOPS
-    BITBOARDS[3] = WHITE_ROOKS
-    BITBOARDS[4] = WHITE_QUEENS
-    BITBOARDS[5] = WHITE_KINGS
-    BITBOARDS[6] = BLACK_PAWNS
-    BITBOARDS[7] = BLACK_KNIGHTS
-    BITBOARDS[8] = BLACK_BISHOPS
-    BITBOARDS[9] = BLACK_ROOKS
-    BITBOARDS[10] = BLACK_QUEENS
-    BITBOARDS[11] = BLACK_KINGS
-    OCCUPATIONS[0] = WHITE_PIECES
-    OCCUPATIONS[1] = BLACK_PIECES
-    OCCUPATIONS[2] = ALL_PIECES
 
     SIDE_TO_MOVE = board.turn
     CASTLING_RIGHTS = board.castling_rights
@@ -105,32 +90,3 @@ def get_king_square(side: chess.Color) -> chess.Square | None:
         return None # King not found on the board
     # Assuming there's exactly one king, find its square index
     return chess.lsb(king_bb)
-# Example Usage (for testing)
-if __name__ == "__main__":
-    board = chess.Board()
-    initialize_bitboards(board)
-
-    print("Initial Board:")
-    print(board)
-
-    print("\nWhite Pawns Bitboard:")
-    print_bitboard(WHITE_PAWNS)
-
-    print("\nAll Pieces Bitboard:")
-    print_bitboard(ALL_PIECES)
-
-    print(f"\nSide to Move: {'White' if SIDE_TO_MOVE else 'Black'}")
-    print(f"Castling Rights: {CASTLING_RIGHTS}")
-    print(f"En Passant Square: {EN_PASSANT_SQUARE}")
-    print(f"Half Move Counter: {HALF_MOVE_COUNTER}")
-    print(f"Full Move Counter: {FULL_MOVE_COUNTER}")
-    board.push_uci("e2e4")
-    initialize_bitboards(board)
-    print("After Board:")
-    print(board)
-
-    print("\nWhite Pawns Bitboard:")
-    print_bitboard(WHITE_PAWNS)
-
-    print("\nAll Pieces Bitboard:")
-    print_bitboard(ALL_PIECES)
