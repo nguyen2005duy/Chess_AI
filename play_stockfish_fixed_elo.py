@@ -21,10 +21,10 @@ except ImportError:
 
 # --- Configuration ---
 STOCKFISH_PATH = "./stockfish.exe"  # Update this for your system
-DEBUG_POSITIONS = 300  # Number of positions to analyze
+DEBUG_POSITIONS = 1000  # Number of positions to analyze
 STOCKFISH_DEPTH = 6  # Depth for "ground truth" analysis
 ENGINE_DEPTH_LIMIT = 6
-ENGINE_TIME_LIMIT_S = 5
+ENGINE_TIME_LIMIT_S = 10
 OUTPUT_DIR = "engine_comparison"
 
 # Create output directory if it doesn't exist
@@ -755,14 +755,6 @@ def run_engine_comparison():
 
     try:
         print("Starting chess engine comparison with multiprocessing...")
-
-        # Configuration
-        STOCKFISH_PATH = "./stockfish.exe"  # Update this for your system
-        DEBUG_POSITIONS = 100  # Number of positions to analyze
-        STOCKFISH_DEPTH = 6  # Depth for "ground truth" analysis
-        ENGINE_DEPTH_LIMIT = 6
-        ENGINE_TIME_LIMIT_S = 5
-        OUTPUT_DIR = "engine_comparison"
 
         # Create output directory if it doesn't exist
         os.makedirs(OUTPUT_DIR, exist_ok=True)

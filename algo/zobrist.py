@@ -73,25 +73,3 @@ def calculate_zobrist_hash(board: chess.Board):
 
 # Initialize keys when the module is imported
 init_zobrist()
-
-# Example Usage
-if __name__ == "__main__":
-    board1 = chess.Board()
-    hash1 = calculate_zobrist_hash(board1)
-    print(f"Initial Hash: {hash1:016x}")
-
-    board1.push_san("e4")
-    hash2 = calculate_zobrist_hash(board1)
-    print(f"Hash after e4: {hash2:016x}")
-
-    board1.push_san("c5")
-    hash3 = calculate_zobrist_hash(board1)
-    print(f"Hash after c5: {hash3:016x}")
-
-    # Test incremental update (conceptual - needs implementation in board_state.py)
-    # Update example to use 2D indexing
-    # hash_after_e4_manual = hash1 ^ ZOBRIST_TABLE[PIECE_TO_ZOBRIST_INDEX[(chess.PAWN, chess.WHITE)]][chess.E2] \
-    #                        ^ ZOBRIST_TABLE[PIECE_TO_ZOBRIST_INDEX[(chess.PAWN, chess.WHITE)]][chess.E4] \
-    #                        ^ ZOBRIST_BLACK_TO_MOVE \
-    #                        ^ ZOBRIST_EN_PASSANT_FILE[chess.square_file(chess.E3)] # Assuming e3 is ep square
-    # print(f"Manual Hash e4:{hash_after_e4_manual:016x}") # Won't match exactly due to EP/castling changes

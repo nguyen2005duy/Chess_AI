@@ -1,7 +1,6 @@
 import chess
 
 # Define bitboards for each piece type and color
-# 64-bit integers will be used to represent the board state
 WHITE_PAWNS = 0
 WHITE_KNIGHTS = 0
 WHITE_BISHOPS = 0
@@ -24,10 +23,11 @@ BITBOARDS = [0] * 12
 OCCUPATIONS = [0] * 3
 # Game state variables
 SIDE_TO_MOVE = chess.WHITE
-CASTLING_RIGHTS = 0 # Use bitflags for castling rights (e.g., 1 for white kingside, 2 for white queenside, 4 for black kingside, 8 for black queenside)
-EN_PASSANT_SQUARE = None # Store the index of the en passant target square, or None
-HALF_MOVE_COUNTER = 0 # Number of half-moves since the last pawn advance or capture
-FULL_MOVE_COUNTER = 1 # Starts at 1 and is incremented after Black's move
+CASTLING_RIGHTS = 0
+EN_PASSANT_SQUARE = None
+HALF_MOVE_COUNTER = 0
+FULL_MOVE_COUNTER = 1
+
 
 def initialize_bitboards(board: chess.Board):
     """
@@ -65,28 +65,3 @@ def initialize_bitboards(board: chess.Board):
     EN_PASSANT_SQUARE = board.ep_square
     HALF_MOVE_COUNTER = board.halfmove_clock
     FULL_MOVE_COUNTER = board.fullmove_number
-
-def print_bitboard(bitboard):
-    """
-    Prints a bitboard in a human-readable 8x8 format.
-    """
-    s = ""
-    for i in range(63, -1, -1):
-        if (bitboard >> i) & 1:
-            s += "1 "
-        else:
-            s += "0 "
-        if i % 8 == 0:
-            s += "\n"
-    print(s)
-
-def get_king_square(side: chess.Color) -> chess.Square | None:
-    """
-    Returns the square index of the king for the given side.
-    Returns None if the king is not found (which indicates an invalid state).
-    """
-    king_bb = WHITE_KINGS if side == chess.WHITE else BLACK_KINGS
-    if king_bb == 0:
-        return None # King not found on the board
-    # Assuming there's exactly one king, find its square index
-    return chess.lsb(king_bb)

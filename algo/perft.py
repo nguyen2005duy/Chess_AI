@@ -163,8 +163,3 @@ def run_perft_tests(profile_depth=0):
     else:
         print("Some Perft tests FAILED.")
 
-# Example Usage
-if __name__ == "__main__":
-    # Set profile_depth to the depth you want to profile (e.g., 4)
-    # Set to 0 to disable profiling and run all tests normally
-    run_perft_tests(profile_depth=5)

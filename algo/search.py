@@ -637,41 +637,6 @@ def is_terminal_position():
 # --- Opening Book Integration ---
 def try_opening_book(board):
     """Attempt to find a move from the opening book"""
-    # List of book files to try in order of preference
-    # book_files = [
-    #     "books/human.bin",
-    #     "books/performance.bin",
-    #     "books/gm2600.bin",
-    #     "books/komodo.bin",
-    # ]
-    #
-    # for book_file in book_files:
-    #     try:
-    #         with chess.polyglot.open_reader(book_file) as reader:
-    #             # Try weighted choice first for variety
-    #             try:
-    #                 entry = reader.weighted_choice(board)
-    #                 if entry:
-    #                     return entry.move
-    #             except IndexError:
-    #                 # No entries or error in weighted choice
-    #                 pass
-    #
-    #             # Fall back to finding the best move by weight
-    #             try:
-    #                 entries = list(reader.find_all(board))
-    #                 if entries:
-    #                     return max(entries, key=lambda e: e.weight).move
-    #             except IndexError:
-    #                 # No entries
-    #                 pass
-    #     except FileNotFoundError:
-    #         # Book file not found, try next one
-    #         continue
-    #     except Exception:
-    #         continue
-    #
-    # return None  # No book move found
     book_path = "books/Book.txt"
 
     book = OpeningBook(book_path)
