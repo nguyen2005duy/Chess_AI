@@ -46,19 +46,6 @@ Chess_AI là một dự án trí tuệ nhân tạo chơi cờ vua tiên tiến, 
   - Đánh giá áp lực tấn công
   - Phân tích khả năng phòng thủ
 
-##### Neural Network (NNUE)
-- Kiến trúc mạng neural hiện đại
-  - Efficiently Updatable Neural Network (NNUE)
-  - Tối ưu hóa cho cờ vua
-- Training
-  - Học từ hàng triệu ván đấu chất lượng cao
-  - Fine-tuning với dữ liệu từ Stockfish
-  - Validation với các bộ test chuyên biệt
-- Ứng dụng
-  - Đánh giá vị trí chính xác
-  - Dự đoán nước đi tốt nhất
-  - Kết hợp với tìm kiếm truyền thống
-
 #### 2. Giao diện người dùng
 ##### Desktop Interface (Pygame)
 - Giao diện đồ họa hiện đại
@@ -171,8 +158,8 @@ python -m algo.main
 
 ## Đóng góp
 
-### Vũ Huy Công: Làm Bot (basic eval + advanced eval)
-### Nguyễn Đức Dũng : Làm bot (advanced eval), UI
-### Nguyẽn Đức Duy : Làm bot (NN) (Test, Training), UI Frame
-### Nguyễn Đức Hưng : Làm bot, UI
+### Vũ Huy Công: Evaluation, Opening-book,endgame-table, Search, Evaluation
+### Nguyễn Đức Dũng : UI, Search
+### Nguyẽn Đức Duy : Bitboard, magic-bitboard,Mover-ordering, evaluation
+### Nguyễn Đức Hưng : Zobrist Hashing, Transposition Table, Performance testing
  
